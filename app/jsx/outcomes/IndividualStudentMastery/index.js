@@ -19,10 +19,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import I18n from 'i18n!IndividualStudentMasteryIndex'
-import Flex, { FlexItem } from '@instructure/ui-layout/lib/components/Flex'
-import List, { ListItem } from '@instructure/ui-elements/lib/components/List'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
-import Text from '@instructure/ui-elements/lib/components/Text'
+import {Flex} from '@instructure/ui-layout'
+import {List, Spinner, Text} from '@instructure/ui-elements'
 import natcompare from 'compiled/util/natcompare'
 import OutcomeGroup from './OutcomeGroup'
 import fetchOutcomes from './fetchOutcomes'
@@ -111,7 +109,7 @@ class IndividualStudentMastery extends React.Component {
   renderLoading () {
     return (
       <Flex justifyItems="center" alignItems="center" padding="medium">
-        <FlexItem><Spinner size="large" title={I18n.t('Loading outcome results')} /></FlexItem>
+        <Flex.Item><Spinner size="large" renderTitle={I18n.t('Loading outcome results')} /></Flex.Item>
       </Flex>
     )
   }
@@ -119,7 +117,7 @@ class IndividualStudentMastery extends React.Component {
   renderError () {
     return (
       <Flex justifyItems="start" alignItems="center" padding="medium 0">
-        <FlexItem><Text color="error">{ I18n.t('An error occurred loading outcomes data.') }</Text></FlexItem>
+        <Flex.Item><Text color="error">{ I18n.t('An error occurred loading outcomes data.') }</Text></Flex.Item>
       </Flex>
     )
   }
@@ -127,7 +125,7 @@ class IndividualStudentMastery extends React.Component {
   renderEmpty () {
     return (
       <Flex justifyItems="start" alignItems="center" padding="medium 0">
-        <FlexItem><Text>{ I18n.t('There are no outcomes in the course.') }</Text></FlexItem>
+        <Flex.Item><Text>{ I18n.t('There are no outcomes in the course.') }</Text></Flex.Item>
       </Flex>
     )
   }
@@ -140,7 +138,7 @@ class IndividualStudentMastery extends React.Component {
         <List variant="unstyled">
           {
             outcomeGroups.sort(natcompare.byKey('title')).map((outcomeGroup) => (
-              <ListItem key={outcomeGroup.id}>
+              <List.Item key={outcomeGroup.id}>
                 <OutcomeGroup
                   outcomeGroup={outcomeGroup}
                   outcomes={outcomes.filter((o) => (o.groupId.toString() === outcomeGroup.id.toString() ))}
@@ -149,7 +147,7 @@ class IndividualStudentMastery extends React.Component {
                   onExpansionChange={this.onElementExpansionChange}
                   outcomeProficiency={outcomeProficiency}
                />
-              </ListItem>
+              </List.Item>
             ))
           }
         </List>

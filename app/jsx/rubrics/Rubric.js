@@ -15,13 +15,13 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-import Flex, {FlexItem} from '@instructure/ui-layout/lib/components/Flex'
+import {Flex} from '@instructure/ui-layout'
 import {get, keyBy, isUndefined, max, sum} from 'lodash'
 import I18n from 'i18n!edit_rubricRubric'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import Table from '@instructure/ui-elements/lib/components/Table'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {Table} from '@instructure/ui-elements'
 
 import Criterion from './Criterion'
 
@@ -120,12 +120,12 @@ const Rubric = (props) => {
   }
 
   const headingCells = [
-    <th scope="col" className="rubric-criteria">
+    <th key='TableHeadingCriteria'scope="col" className="rubric-criteria">
       {I18n.t('Criteria')}
     </th>,
-    <th scope="col" className="ratings">{I18n.t('Ratings')}</th>,
+    <th key='TableHeadingRatings' scope="col" colSpan={isSummary ? "2" : null} className="ratings">{I18n.t('Ratings')}</th>,
     showPointsColumn() ? (
-      <th className="rubric-points" scope="col">{I18n.t('Pts')}</th>
+      <th key='TableHeadingPoints'className="rubric-points" scope="col">{I18n.t('Pts')}</th>
     ) : null
   ]
 
@@ -150,11 +150,11 @@ const Rubric = (props) => {
           {criteria}
           {showTotalPoints && (
             <tr>
-              <td colSpan={isSummary ? "2" : "3"}>
+              <td colSpan="3">
                 <Flex justifyItems="end">
-                  <FlexItem data-selenium="rubric_total">
+                  <Flex.Item data-selenium="rubric_total">
                     {hideScoreTotal || noScore ? null : total}
-                  </FlexItem>
+                  </Flex.Item>
                 </Flex>
               </td>
             </tr>

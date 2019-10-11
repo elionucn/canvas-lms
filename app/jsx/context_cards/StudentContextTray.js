@@ -26,13 +26,10 @@ import Rating from './Rating'
 import SectionInfo from './SectionInfo'
 import SubmissionProgressBars from './SubmissionProgressBars'
 import MessageStudents from '../shared/MessageStudents'
-import Heading from '@instructure/ui-elements/lib/components/Heading'
-import Button from '@instructure/ui-buttons/lib/components/Button'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
-import Tray from '@instructure/ui-overlays/lib/components/Tray'
-import CloseButton from '@instructure/ui-buttons/lib/components/CloseButton'
+import {Heading, Text, Spinner} from '@instructure/ui-elements'
+import {Button, CloseButton} from '@instructure/ui-buttons'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {Tray} from '@instructure/ui-overlays'
 
 const courseShape = PropTypes.shape({
   permissions: PropTypes.shape({}).isRequired,
@@ -154,13 +151,18 @@ export default class StudentContextTray extends React.Component {
               course.permissions.manage_grades ||
               course.permissions.view_all_grades
           )}
-          {StudentContextTray.renderQuickLink(
-            'analytics',
-            I18n.t('Analytics'),
-            I18n.t('View analytics for %{name}', { name: user.short_name }),
-            `/courses/${this.props.courseId}/analytics/users/${this.props.studentId}`,
-            () => course.permissions.view_analytics && user.analytics
-          )}
+          {
+            // only include analytics 1 link if analytics 2 is not among the external tool links
+            this.props.externalTools && this.props.externalTools.some(t => t.tool_id == 'fd75124a-140e-470f-944c-114d2d93bb40') ?
+              null :
+              StudentContextTray.renderQuickLink(
+                'analytics',
+                I18n.t('Analytics'),
+                I18n.t('View analytics for %{name}', { name: user.short_name }),
+                `/courses/${this.props.courseId}/analytics/users/${this.props.studentId}`,
+                () => course.permissions.view_analytics && user.analytics
+              )
+          }
           {this.props.externalTools ? this.props.externalTools.map((tool, i) => {
               return StudentContextTray.renderQuickLink(
                 `tool${i}`,
@@ -212,7 +214,7 @@ export default class StudentContextTray extends React.Component {
             >
               {loading ? (
                 <div className='StudentContextTray__Spinner'>
-                  <Spinner title={I18n.t('Loading')}
+                  <Spinner renderTitle={I18n.t('Loading')}
                     size='large'
                   />
                 </div>

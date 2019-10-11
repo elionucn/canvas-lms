@@ -729,7 +729,7 @@ class CoursesController < ApplicationController
   #   The grading standard id to set for the course.  If no value is provided for this argument the current grading_standard will be un-set from this course.
   #
   # @argument course[grade_passback_setting] [String]
-  #   Optional. The grade_passback_setting for the course. Only 'nightly_sync' and '' are allowed
+  #   Optional. The grade_passback_setting for the course. Only 'nightly_sync', 'disabled', and '' are allowed
   #
   # @argument course[course_format] [String]
   #   Optional. Specifies the format of the course. (Should be 'on_campus', 'online', or 'blended')
@@ -945,6 +945,7 @@ class CoursesController < ApplicationController
     Shackles.activate(:slave) do
       get_context
       if authorized_action(@context, @current_user, [:read_roster, :view_all_grades, :manage_grades])
+        log_api_asset_access([ "roster", @context ], 'roster', 'other')
         #backcompat limit param
         params[:per_page] ||= params[:limit]
 
@@ -1078,6 +1079,32 @@ class CoursesController < ApplicationController
       enrollments = user.not_ended_enrollments.where(:course_id => @context).preload(:course, :root_account, :sis_pseudonym) if includes.include?('enrollments')
       render :json => user_json(user, @current_user, session, includes, @context, enrollments)
     end
+  end
+
+  # @API Search for content share users
+  #
+  # Returns a paginated list of users you can share content with.  Requires the content share
+  # feature and the user must have the manage content permission for the course.
+  #
+  # @argument search_term [Required, String]
+  #   Term used to find users.  Will search available share users with the search term in their name.
+  #
+  # @example_request
+  #     curl -H 'Authorization: Bearer <token>' \
+  #          https://<canvas>/api/v1/courses/<course_id>/content_share_users \
+  #          -d 'search_term=smith'
+  #
+  # @returns [User]
+  def content_share_users
+    get_context
+    return render json: { message: "Feature disabled" }, status: :forbidden unless @context.root_account.feature_enabled?(:direct_share)
+    reject!('Search term required') unless params[:search_term]
+    return unless authorized_action(@context, @current_user, :manage_content)
+    users = UserSearch.for_user_in_context(params[:search_term], @context.root_account,
+      @current_user, session, {enrollment_type: ['Ta', 'Teacher', 'Designer']}).
+      where.not(id: @current_user.id)
+    users = Api.paginate(users, self, api_v1_course_content_share_users_url)
+    render :json => users.map { |u| user_display_json(u, @context.root_account) }
   end
 
   include Api::V1::PreviewHtml
@@ -1262,7 +1289,8 @@ class CoursesController < ApplicationController
   #     "allow_student_organized_groups": true,
   #     "hide_final_grades": false,
   #     "hide_distribution_graphs": false,
-  #     "lock_all_announcements": true
+  #     "lock_all_announcements": true,
+  #     "usage_rights_required": false
   #   }
   def api_settings
     get_context
@@ -1286,6 +1314,7 @@ class CoursesController < ApplicationController
       @alerts = @context.alerts
       add_crumb(t('#crumbs.settings', "Settings"), named_context_url(@context, :context_details_url))
 
+      course_card_images_enabled = @context.feature_enabled?(:course_card_images)
       js_env({
         COURSE_ID: @context.id,
         USERS_URL: "/api/v1/courses/#{@context.id}/users",
@@ -1310,7 +1339,8 @@ class CoursesController < ApplicationController
         MEMBERSHIP_SERVICE_FEATURE_FLAG_ENABLED: @context.root_account.feature_enabled?(:membership_service_for_lti_tools),
         CONTEXT_BASE_URL: "/courses/#{@context.id}",
         PUBLISHING_ENABLED: @publishing_enabled,
-        COURSE_IMAGES_ENABLED: @context.feature_enabled?(:course_card_images),
+        COURSE_IMAGES_ENABLED: course_card_images_enabled,
+        use_unsplash_image_search: course_card_images_enabled && PluginSetting.settings_for_plugin(:unsplash)&.dig('access_key')&.present?,
         COURSE_VISIBILITY_OPTION_DESCRIPTIONS: @context.course_visibility_option_descriptions
       })
 
@@ -1365,6 +1395,9 @@ class CoursesController < ApplicationController
   # @argument lock_all_announcements [Boolean]
   #   Disable comments on announcements
   #
+  # @argument usage_rights_required [Boolean]
+  #   Copyright and license information must be provided for files before they are published.
+  #
   # @argument restrict_student_past_view [Boolean]
   #   Restrict students from viewing courses after end date
   #
@@ -1399,6 +1432,7 @@ class CoursesController < ApplicationController
       :hide_final_grades,
       :hide_distribution_graphs,
       :lock_all_announcements,
+      :usage_rights_required,
       :restrict_student_past_view,
       :restrict_student_future_view,
       :show_announcements_on_home_page,
@@ -1873,7 +1907,11 @@ class CoursesController < ApplicationController
           add_crumb(t('#crumbs.assignments', "Assignments"))
           set_js_assignment_data
           js_env(:SIS_NAME => AssignmentUtil.post_to_sis_friendly_name(@context))
-          js_env(:QUIZ_LTI_ENABLED => @context.feature_enabled?(:quizzes_next) && @context.quiz_lti_tool.present?)
+          js_env(
+            :QUIZ_LTI_ENABLED => @context.feature_enabled?(:quizzes_next) &&
+              !@context.root_account.feature_enabled?(:newquizzes_on_quiz_page) &&
+              @context.quiz_lti_tool.present?
+          )
           js_env(:COURSE_HOME => true)
           @upcoming_assignments = get_upcoming_assignments(@context)
         when 'modules'
@@ -2542,6 +2580,10 @@ class CoursesController < ApplicationController
         elsif @course.lock_all_announcements
           @course.lock_all_announcements = false
         end
+      end
+
+      if params[:course].key?(:usage_rights_required)
+        @course.usage_rights_required = value_to_boolean(params[:course].delete(:usage_rights_required))
       end
 
       if params_for_update.has_key?(:locale) && params_for_update[:locale].blank?
@@ -3218,7 +3260,8 @@ class CoursesController < ApplicationController
   private
 
   def update_grade_passback_setting(grade_passback_setting)
-    unless grade_passback_setting.blank? || grade_passback_setting == 'nightly_sync'
+    valid_states = Setting.get('valid_grade_passback_settings', 'nightly_sync,disabled').split(',')
+    unless grade_passback_setting.blank? || valid_states.include?(grade_passback_setting)
       @course.errors.add(:grade_passback_setting, t("Invalid grade_passback_setting"))
     end
     @course.grade_passback_setting = grade_passback_setting.presence
@@ -3239,7 +3282,7 @@ class CoursesController < ApplicationController
       :syllabus_body, :public_description, :allow_student_forum_attachments, :allow_student_discussion_topics, :allow_student_discussion_editing,
       :show_total_grade_as_points, :default_wiki_editing_roles, :allow_student_organized_groups, :course_code, :default_view,
       :open_enrollment, :allow_wiki_comments, :turnitin_comments, :self_enrollment, :license, :indexed,
-      :abstract_course, :storage_quota, :storage_quota_mb, :restrict_enrollments_to_course_dates,
+      :abstract_course, :storage_quota, :storage_quota_mb, :restrict_enrollments_to_course_dates, :use_rights_required,
       :restrict_student_past_view, :restrict_student_future_view, :grading_standard, :grading_standard_enabled,
       :locale, :integration_id, :hide_final_grades, :hide_distribution_graphs, :lock_all_announcements, :public_syllabus,
       :public_syllabus_to_auth, :course_format, :time_zone, :organize_epub_by_content_type, :enable_offline_web_export,

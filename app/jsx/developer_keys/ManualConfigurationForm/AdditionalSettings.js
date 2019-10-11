@@ -20,18 +20,11 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import omit from 'lodash/omit'
 import omitBy from 'lodash/omitBy'
-import View from '@instructure/ui-layout/lib/components/View'
-import FormFieldGroup from '@instructure/ui-form-field/lib/components/FormFieldGroup';
-import TextInput from '@instructure/ui-forms/lib/components/TextInput';
-import TextArea from '@instructure/ui-forms/lib/components/TextArea';
-import RadioInput from '@instructure/ui-forms/lib/components/RadioInput';
-import RadioInputGroup from '@instructure/ui-forms/lib/components/RadioInputGroup';
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent';
-import { ToggleDetails } from '@instructure/ui-toggle-details';
-import Grid from '@instructure/ui-layout/lib/components/Grid';
-import GridRow from '@instructure/ui-layout/lib/components/Grid/GridRow';
-import GridCol from '@instructure/ui-layout/lib/components/Grid/GridCol';
-
+import {View, Grid} from '@instructure/ui-layout'
+import {FormFieldGroup} from '@instructure/ui-form-field'
+import {TextInput, TextArea, RadioInput, RadioInputGroup} from '@instructure/ui-forms'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {ToggleDetails} from '@instructure/ui-toggle-details'
 
 export default class AdditionalSettings extends React.Component {
   constructor (props) {
@@ -126,60 +119,60 @@ export default class AdditionalSettings extends React.Component {
             layout="columns"
           >
             <Grid>
-              <GridRow>
-                <GridCol>
+              <Grid.Row>
+                <Grid.Col>
                   <TextInput
                     name="domain"
                     value={additionalSettings.domain}
                     label={I18n.t("Domain")}
                     onChange={this.handleDomainChange}
                   />
-                </GridCol>
-                <GridCol>
+                </Grid.Col>
+                <Grid.Col>
                   <TextInput
                     name="tool_id"
                     value={additionalSettings.tool_id}
                     label={I18n.t("Tool Id")}
                     onChange={this.handleToolIdChange}
                   />
-                </GridCol>
-              </GridRow>
-              <GridRow>
-                <GridCol>
+                </Grid.Col>
+              </Grid.Row>
+              <Grid.Row>
+                <Grid.Col>
                   <TextInput
                     name="settings_icon_url"
                     value={additionalSettings.icon_url}
                     label={I18n.t("Icon Url")}
                     onChange={this.handleIconUrlChange}
                   />
-                </GridCol>
-                <GridCol>
+                </Grid.Col>
+                <Grid.Col>
                   <TextInput
                     name="text"
                     value={additionalSettings.text}
                     label={I18n.t("Text")}
                     onChange={this.handleTextChange}
                   />
-                </GridCol>
-                <GridCol>
+                </Grid.Col>
+                <Grid.Col>
                   <TextInput
                     name="selection_height"
                     value={additionalSettings.selection_height && additionalSettings.selection_height.toString()}
                     label={I18n.t("Selection Height")}
                     onChange={this.handleSelectionHeightChange}
                   />
-                </GridCol>
-                <GridCol>
+                </Grid.Col>
+                <Grid.Col>
                   <TextInput
                     name="selection_width"
                     value={additionalSettings.selection_width && additionalSettings.selection_width.toString()}
                     label={I18n.t("Selection Width")}
                     onChange={this.handleSelectionWidthChange}
                   />
-                </GridCol>
-              </GridRow>
-              <GridRow>
-                <GridCol>
+                </Grid.Col>
+              </Grid.Row>
+              <Grid.Row>
+                <Grid.Col>
                   <TextArea
                     label={I18n.t('Custom Fields')}
                     maxHeight="10rem"
@@ -188,10 +181,10 @@ export default class AdditionalSettings extends React.Component {
                     value={custom_fields}
                     onChange={this.handleCustomFieldsChange}
                   />
-                </GridCol>
-              </GridRow>
-              <GridRow>
-                <GridCol>
+                </Grid.Col>
+              </Grid.Row>
+              <Grid.Row>
+                <Grid.Col>
                 <RadioInputGroup
                   name="privacy_level"
                   value={additionalSettings.privacy_level || 'anonymous'}
@@ -202,8 +195,8 @@ export default class AdditionalSettings extends React.Component {
                   <RadioInput label={I18n.t('Public')} value="public"/>
                   <RadioInput label={I18n.t('Private')} value="anonymous"/>
                 </RadioInputGroup>
-                </GridCol>
-              </GridRow>
+                </Grid.Col>
+              </Grid.Row>
             </Grid>
          </FormFieldGroup>
         </View>

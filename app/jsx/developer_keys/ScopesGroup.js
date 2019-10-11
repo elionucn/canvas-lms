@@ -18,12 +18,11 @@
 import I18n from 'i18n!react_developer_keys'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Checkbox from '@instructure/ui-forms/lib/components/Checkbox'
-import Flex, {FlexItem} from '@instructure/ui-layout/lib/components/Flex'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import ToggleDetails from '@instructure/ui-toggle-details/lib/components/ToggleDetails'
-import View from '@instructure/ui-layout/lib/components/View'
+import {Checkbox} from '@instructure/ui-forms'
+import {Flex, View} from '@instructure/ui-layout'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {Text} from '@instructure/ui-elements'
+import {ToggleDetails} from '@instructure/ui-toggle-details'
 import ScopesMethod from './ScopesMethod'
 import DeveloperKeyScope from './Scope'
 
@@ -80,12 +79,12 @@ export default class ScopesGroup extends React.Component {
   groupSummary() {
     return (
       <Flex justifyItems="space-between">
-        <FlexItem padding="0 x-small 0 0">
+        <Flex.Item padding="0 x-small 0 0">
           <Text size="medium">{this.props.name}</Text>
-        </FlexItem>
-        <FlexItem>
+        </Flex.Item>
+        <Flex.Item>
           {this.selectedMethods()}
-        </FlexItem>
+        </Flex.Item>
       </Flex>
     )
   }
@@ -134,7 +133,7 @@ export default class ScopesGroup extends React.Component {
         data-automation="scopes-group"
       >
         <Flex alignItems="start" padding="small none small small">
-        <FlexItem padding="none small none none">
+        <Flex.Item padding="none small none none">
             <Checkbox
               label={
                 <ScreenReaderContent>
@@ -145,8 +144,8 @@ export default class ScopesGroup extends React.Component {
               checked={this.state.groupChecked}
               onChange={this.handleGroupChange}
             />
-          </FlexItem>
-          <FlexItem grow padding="none small none none">
+          </Flex.Item>
+          <Flex.Item grow padding="none small none none">
             <div data-automation="toggle-scope-group">
               <ToggleDetails summary={this.groupSummary()} fluidWidth>
                 {this.props.scopes.map(scope => (
@@ -159,7 +158,7 @@ export default class ScopesGroup extends React.Component {
                 ))}
               </ToggleDetails>
             </div>
-          </FlexItem>
+          </Flex.Item>
         </Flex>
       </View>
     )

@@ -17,7 +17,7 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
+import {Spinner} from '@instructure/ui-elements'
 import $ from 'jquery'
 import _ from 'underscore'
 import Backbone from 'Backbone'
@@ -100,7 +100,7 @@ export default class CalendarEvent extends Backbone.Model {
   showSpinner() {
     ReactDOM.render(
       <div>
-        <Spinner title={I18n.t('Loading')} size="medium" />
+        <Spinner renderTitle={I18n.t('Loading')} size="medium" />
       </div>
     ,
       this.view.el

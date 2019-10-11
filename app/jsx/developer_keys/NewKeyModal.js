@@ -19,11 +19,10 @@
 import I18n from 'i18n!react_developer_keys'
 import $ from 'jquery'
 
-import CloseButton from '@instructure/ui-buttons/lib/components/CloseButton'
-import Heading from '@instructure/ui-elements/lib/components/Heading'
-import Modal, {ModalHeader, ModalBody, ModalFooter} from '@instructure/ui-overlays/lib/components/Modal'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
-import View from '@instructure/ui-layout/lib/components/View'
+import {CloseButton} from '@instructure/ui-buttons'
+import {Heading, Spinner} from '@instructure/ui-elements'
+import {Modal} from '@instructure/ui-overlays'
+import {View} from '@instructure/ui-layout'
 import React from 'react'
 import PropTypes from 'prop-types'
 import NewKeyForm from './NewKeyForm'
@@ -95,7 +94,7 @@ export default class DeveloperKeyModal extends React.Component {
 
   saveCustomizations = () => {
     const { store, actions, createLtiKeyState } = this.props
-    if(this.state.toolConfiguration.custom_fields === null) {
+    if(this.state.toolConfiguration?.custom_fields === null) {
       this.setState({showCustomizationMessages: true})
       return Promise.reject()
     }
@@ -259,16 +258,16 @@ export default class DeveloperKeyModal extends React.Component {
           label={editing ? I18n.t('Create developer key') : I18n.t('Edit developer key')}
           shouldCloseOnDocumentClick={false}
         >
-          <ModalHeader>
+          <Modal.Header>
             <CloseButton placement="end" onClick={this.closeModal}>
               {I18n.t('Cancel')}
             </CloseButton>
             <Heading>{I18n.t('Key Settings')}</Heading>
-          </ModalHeader>
-          <ModalBody>
+          </Modal.Header>
+          <Modal.Body>
             {this.isSaving
               ? <View as="div" textAlign="center">
-                  <Spinner title={I18n.t('Creating Key')} margin="0 0 0 medium" />
+                  <Spinner renderTitle={I18n.t('Creating Key')} margin="0 0 0 medium" />
                 </View>
               : <NewKeyForm
                   ref={this.setNewFormRef}
@@ -292,8 +291,8 @@ export default class DeveloperKeyModal extends React.Component {
                   showCustomizationMessages={this.state.showCustomizationMessages}
                 />
             }
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             {this.isLtiKey
               ? <LtiKeyFooter
                   onCancelClick={this.closeModal}
@@ -311,7 +310,7 @@ export default class DeveloperKeyModal extends React.Component {
                   onSaveClick={this.submitForm}
                 />
             }
-          </ModalFooter>
+          </Modal.Footer>
         </Modal>
       </div>
     )

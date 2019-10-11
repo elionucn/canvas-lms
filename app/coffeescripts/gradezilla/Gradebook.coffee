@@ -77,8 +77,8 @@ import * as GradeInputHelper from 'jsx/grading/helpers/GradeInputHelper'
 import OutlierScoreHelper from 'jsx/grading/helpers/OutlierScoreHelper'
 import {isHidden} from 'jsx/grading/helpers/SubmissionHelper'
 import LatePolicyApplicator from 'jsx/grading/LatePolicyApplicator'
-import Button from '@instructure/ui-buttons/lib/components/Button'
-import IconSettingsSolid from '@instructure/ui-icons/lib/Solid/IconSettings'
+import {Button} from '@instructure/ui-buttons'
+import {IconSettingsSolid} from '@instructure/ui-icons'
 import * as FlashAlert from 'jsx/shared/FlashAlert'
 import 'jquery.ajaxJSON'
 import 'jquery.instructure_date_and_time'
@@ -741,10 +741,11 @@ export default do ->
     studentsThatCanSeeAssignment: (assignmentId) ->
       @courseContent.assignmentStudentVisibility[assignmentId] ||= (
         assignment = @getAssignment(assignmentId)
+        allStudents = Object.assign({}, @students, @studentViewStudents)
         if assignment.only_visible_to_overrides
-          _.pick @students, assignment.assignment_visibility...
+          _.pick allStudents, assignment.assignment_visibility...
         else
-          @students
+          allStudents
       )
 
     isInvalidSort: =>
@@ -2373,6 +2374,7 @@ export default do ->
       selectPreviousAssignment: => @loadTrayAssignment('previous')
       selectNextStudent: => @loadTrayStudent('next')
       selectPreviousStudent: => @loadTrayStudent('previous')
+      showSimilarityScore: @options.show_similarity_score
       speedGraderEnabled: @options.speed_grader_enabled
       student:
         id: student.id

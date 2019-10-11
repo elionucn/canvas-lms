@@ -1594,88 +1594,122 @@ describe Assignment do
   end
 
   describe '#grade_student' do
-    before(:once) { setup_assignment_without_submission }
+    let_once(:now) { Time.zone.now }
+    let_once(:student) { User.create!.tap {|u| course.enroll_student(u, enrollment_state: 'active') } }
+    let_once(:teacher) { User.create!.tap {|u| course.enroll_teacher(u, enrollment_state: 'active') } }
+    let_once(:assignment) { course.assignments.create! }
+    let_once(:course) do
+      course = Account.default.courses.create!
+      course.offer!
+      course
+    end
 
-    context 'with a submission that cannot be graded' do
-      before :each do
-        allow_any_instance_of(Submission).to receive(:grader_can_grade?).and_return(false)
+    describe 'grade_posting_in_progress' do
+      let(:submission) { instance_double("Submission") }
+
+      before do
+        allow(assignment).to receive(:find_or_create_submissions).
+          with([student], Submission.preload(:grading_period, :stream_item)).
+          and_yield([submission])
       end
 
-      it 'raises a GradeError when Submission#grader_can_grade? returns false' do
-        expect {
-          @assignment.grade_student(@user, grade: 42, grader: @teacher)
-        }.to raise_error(Assignment::GradeError)
+      it 'sets grade_posting_in_progress to false when absent' do
+        expect(assignment).to receive(:save_grade_to_submission).
+          with([submission], student, nil, grade: 10, grader: teacher)
+        assignment.grade_student(student, grade: 10, grader: teacher)
       end
+
+      it 'sets grade_posting_in_progress to true when present' do
+        expect(assignment).to receive(:save_grade_to_submission).
+          with([submission], student, nil, grade: 10, grader: teacher, grade_posting_in_progress: true)
+        assignment.grade_student(student, grade: 10, grader: teacher, grade_posting_in_progress: true)
+      end
+
+      it 'sets grade_posting_in_progress to false when present' do
+        expect(assignment).to receive(:save_grade_to_submission).
+          with([submission], student, nil, grade: 10, grader: teacher, grade_posting_in_progress: false)
+        assignment.grade_student(student, grade: 10, grader: teacher, grade_posting_in_progress: false)
+      end
+    end
+
+    it 'raises a GradeError when grader does not have permission' do
+      expect {
+        assignment.grade_student(student, grade: 42, grader: student)
+      }.to raise_error(Assignment::GradeError)
     end
 
     context 'with a submission that has an existing grade' do
-      it 'applies the late penalty' do
-        Timecop.freeze do
-          @assignment.update(points_possible: 100, due_at: 1.5.days.ago, submission_types: %w[online_text_entry])
-          late_policy_factory(course: @course, deduct: 15.0, every: :day, missing: 80.0)
-          @assignment.submit_homework(@user, submission_type: 'online_text_entry', body: 'foo')
-          @assignment.grade_student(@user, grade: "100", grader: @teacher)
-          @assignment.reload
-
-          expect(@assignment.submission_for_student(@user).grade).to eql('70')
-          @assignment.grade_student(@user, grade: '70', grader: @teacher)
-          expect(@assignment.submission_for_student(@user).grade).to eql('40')
+      around(:once) do |block|
+        Timecop.freeze(now) do
+          block.call
         end
+      end
+
+      before(:once) do
+        assignment.update!(points_possible: 100, due_at: 36.hours.ago(now), submission_types: %w[online_text_entry])
+        late_policy_factory(course: course, deduct: 15.0, every: :day, missing: 80.0)
+        assignment.submit_homework(student, submission_type: :online_text_entry, body: :foo)
+      end
+
+      it 'applies the late penalty to a full credit grade' do
+        submission, * = assignment.grade_student(student, grade: "100", grader: teacher)
+        expect(submission.grade).to eql('70')
+      end
+
+      it 'applies the late penalty to a grade less than full credit' do
+        submission, * = assignment.grade_student(student, grade: '70', grader: teacher)
+        expect(submission.grade).to eql('40')
       end
     end
 
-    context 'with a valid student' do
-      before :once do
-        @result = @assignment.grade_student(@user, grade: "10", grader: @teacher)
-        @assignment.reload
-      end
+    context 'with a submission' do
+      subject_once { submissions }
+      let_once(:submissions) { assignment.grade_student(student, grade: "10", grader: teacher) }
 
-      it 'returns an array' do
-        expect(@result).to be_is_a(Array)
-      end
+      it { is_expected.to be_an Array }
 
       it 'now has a submission' do
-        expect(@assignment.submissions.size).to eql(1)
+        assignment.reload
+        expect(assignment.submissions.count).to be 1
       end
 
       describe 'the submission after grading' do
-        subject { @assignment.submissions.first }
+        subject_once(:submission) { submissions.first }
 
         describe '#state' do
-          subject { super().state }
-          it { is_expected.to eql(:graded) }
+          it { expect(submission.state).to be :graded }
         end
-        it { is_expected.to eq @result[0] }
 
         describe '#score' do
-          subject { super().score }
-          it { is_expected.to eq 10.0 }
+          it { expect(submission.score).to eq 10.0 }
         end
 
         describe '#user_id' do
-          subject { super().user_id }
-          it { is_expected.to eq @user.id }
+          it { expect(submission.user_id).to eq student.id }
         end
-        specify { expect(subject.versions.length).to eq 1 }
+
+        it 'has a version length of one' do
+          expect(submission.versions.length).to eq 1
+        end
       end
     end
 
     context 'with no student' do
       it 'raises an error' do
-        expect { @assignment.grade_student(nil) }.to raise_error(Assignment::GradeError, 'Student is required')
+        expect { assignment.grade_student(nil) }.to raise_error(Assignment::GradeError, 'Student is required')
       end
     end
 
     context 'with a student that does not belong' do
       it 'raises an error' do
-        expect { @assignment.grade_student(User.new) }.to raise_error(Assignment::GradeError, 'Student must be enrolled in the course as a student to be graded')
+        expect { assignment.grade_student(User.new) }.to raise_error(Assignment::GradeError, 'Student must be enrolled in the course as a student to be graded')
       end
     end
 
     context 'with an invalid initial grade' do
       before :once do
-        @result = @assignment.grade_student(@user, grade: "{", grader: @teacher)
-        @assignment.reload
+        @result = assignment.grade_student(student, grade: "{", grader: teacher)
+        assignment.reload
       end
 
       it 'does not change the workflow_state to graded' do
@@ -1686,10 +1720,9 @@ describe Assignment do
 
     context "moderated assignment" do
       let_once(:assignment) do
-        @course.assignments.create!(moderated_grading: true, grader_count: 1, final_grader: @teacher)
+        course.assignments.create!(moderated_grading: true, grader_count: 1, final_grader: teacher)
       end
-      let_once(:student) { course_with_user("StudentEnrollment", course: @course, active_all: true, name: "Stu").user }
-      let_once(:ta) { course_with_user("TaEnrollment", course: @course, active_all: true, name: "Ta").user }
+      let_once(:ta) { course_with_user("TaEnrollment", course: course, active_all: true, name: "Ta").user }
       let(:pg) { @result.first.provisional_grades.find_by!(scorer: ta) }
 
       before(:each) do
@@ -1740,8 +1773,8 @@ describe Assignment do
 
     context 'with an excused assignment' do
       before :once do
-        @result = @assignment.grade_student(@user, grader: @teacher, excuse: true)
-        @assignment.reload
+        @result = assignment.grade_student(student, grader: teacher, excuse: true)
+        assignment.reload
       end
 
       it 'excuses the assignment and marks it as graded' do
@@ -1753,18 +1786,18 @@ describe Assignment do
 
     context 'with anonymous grading' do
       it 'explicitly sets anonymous grading if given' do
-        @assignment.grade_student(@user, graded_anonymously: true, grade: "10", grader: @teacher)
-        @assignment.reload
-        expect(@assignment.submissions.first.graded_anonymously).to be_truthy
+        assignment.grade_student(student, graded_anonymously: true, grade: "10", grader: teacher)
+        assignment.reload
+        expect(assignment.submissions.first.graded_anonymously).to be_truthy
       end
 
       it 'does not set anonymous grading if not given' do
-        @assignment.grade_student(@user, graded_anonymously: true, grade: "10", grader: @teacher)
-        @assignment.reload
-        @assignment.grade_student(@user, grade: "10", grader: @teacher)
-        @assignment.reload
+        assignment.grade_student(student, graded_anonymously: true, grade: "10", grader: teacher)
+        assignment.reload
+        assignment.grade_student(student, grade: "10", grader: teacher)
+        assignment.reload
         # should still true because grade didn't actually change
-        expect(@assignment.submissions.first.graded_anonymously).to be_truthy
+        expect(assignment.submissions.first.graded_anonymously).to be_truthy
       end
     end
 
@@ -1887,7 +1920,6 @@ describe Assignment do
     end
 
     describe 'AnonymousOrModerationEvent creation on grading a submission' do
-      let_once(:course) { Course.create! }
       let_once(:assignment) do
         course.assignments.create!(
           anonymous_grading: true,
@@ -1895,10 +1927,6 @@ describe Assignment do
           points_possible: 100
         )
       end
-
-      let_once(:student) { course.enroll_student(User.create!, active_all: true).user }
-      let_once(:submission) { assignment.submission_for_student(student) }
-      let_once(:teacher) { course.enroll_teacher(User.create!, enrollment_state: 'active').user }
 
       let(:last_event) do
         AnonymousOrModerationEvent.where(assignment: assignment, event_type: 'submission_updated').last
@@ -1929,7 +1957,7 @@ describe Assignment do
       end
 
       it 'includes the affected submission on the event' do
-        assignment.grade_student(student, grader: teacher, score: 75)
+        submission, * = assignment.grade_student(student, grader: teacher, score: 75)
         expect(last_event.submission_id).to eq submission.id
       end
 
@@ -1990,12 +2018,14 @@ describe Assignment do
           it "creates a submission_changed event when unexcusing the assignment" do
             moderated_assignment.grade_student(student, grader: teacher, provisional: true, excuse: true)
             moderated_assignment.grade_student(student, grader: teacher, provisional: true, score: 40)
+
             expect(last_event.payload['excused']).to eq [true, false]
           end
 
           it "does not capture score changes in the submission_changed event" do
             moderated_assignment.grade_student(student, grader: teacher, provisional: true, excuse: true)
             moderated_assignment.grade_student(student, grader: teacher, provisional: true, score: 40)
+
             expect(last_event.payload).not_to include('score')
           end
         end
@@ -2011,22 +2041,14 @@ describe Assignment do
     end
 
     describe "submission posting" do
-      let(:course) { Course.create! }
-
-      let(:student) { course.enroll_student(User.create!, enrollment_state: 'active').user }
-      let(:teacher) { course.enroll_teacher(User.create!, enrollment_state: 'active').user }
-
-      let(:assignment) { course.assignments.create!(title: "hi") }
-      let(:submission) { assignment.submission_for_student(student) }
-
       context "when the submission is unposted" do
         it "posts the submission if a grade is assigned" do
-          assignment.grade_student(student, grader: teacher, score: 50)
+          submission, * = assignment.grade_student(student, grader: teacher, score: 50)
           expect(submission).to be_posted
         end
 
         it "posts the submission if an excusal is granted" do
-          assignment.grade_student(student, grader: teacher, excused: true)
+          submission, * = assignment.grade_student(student, grader: teacher, excused: true)
           expect(submission).to be_posted
         end
 
@@ -2035,13 +2057,13 @@ describe Assignment do
           PostPolicy.enable_feature!
 
           assignment.post_policy.update!(post_manually: true)
-          assignment.grade_student(student, grader: teacher, score: 50)
+          submission, * = assignment.grade_student(student, grader: teacher, score: 50)
           expect(submission).not_to be_posted
         end
 
         it "does not post the submission for a muted assignment when post policies are not enabled" do
           assignment.mute!
-          assignment.grade_student(student, grader: teacher, score: 50)
+          submission, * = assignment.grade_student(student, grader: teacher, score: 50)
           expect(submission).not_to be_posted
         end
 
@@ -2052,19 +2074,141 @@ describe Assignment do
             final_grader: teacher,
             grader_count: 2
           )
-          moderated_assignment.grade_student(student, grader: teacher, provisional: true, score: 40)
-          expect(moderated_assignment.submission_for_student(student)).not_to be_posted
+          submission, * = moderated_assignment.grade_student(student, grader: teacher, provisional: true, score: 40)
+          expect(submission).not_to be_posted
         end
       end
 
       it "does not update the posted_at date for a previously-posted submission" do
+        submission = assignment.submissions.find_by!(user: student)
         submission.update!(posted_at: 1.day.ago)
 
         expect {
           assignment.grade_student(student, grader: teacher, score: 50)
         }.not_to change {
-          assignment.submission_for_student(student).posted_at
+          submission.reload.posted_at
         }
+      end
+    end
+
+    describe "grade change audit records" do
+      context "when post policies are enabled" do
+        before(:once) do
+          PostPolicy.enable_feature!
+          course.enable_feature!(:new_gradebook)
+        end
+
+        context "when assignment posts manually" do
+          before(:each) do
+            assignment.ensure_post_policy(post_manually: true)
+          end
+
+          it "inserts a record" do
+            expect(Auditors::GradeChange::Stream).to receive(:insert).once
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
+
+        context "when assignment posts automatically" do
+          before(:each) do
+            assignment.ensure_post_policy(post_manually: false)
+          end
+
+          it "inserts a record" do
+            expect(Auditors::GradeChange::Stream).to receive(:insert).once
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
+      end
+
+      context "when post policies are not enabled" do
+        before(:once) do
+          PostPolicy.disable_feature!
+        end
+
+        context "when assignment is muted" do
+          before(:each) do
+            assignment.mute!
+          end
+
+          it "inserts a record" do
+            expect(Auditors::GradeChange::Stream).to receive(:insert).once
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
+
+        context "when assignment is unmuted" do
+          before(:each) do
+            assignment.unmute!
+          end
+
+          it "inserts a record" do
+            expect(Auditors::GradeChange::Stream).to receive(:insert).once
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
+      end
+    end
+
+    describe "grade change live events" do
+      let(:student) { course.enroll_student(User.create!, enrollment_state: :active).user }
+      let(:teacher) { course.enroll_teacher(User.create!, enrollment_state: :active).user }
+
+      context "when post policies are enabled" do
+        before(:once) do
+          PostPolicy.enable_feature!
+          course.enable_feature!(:new_gradebook)
+        end
+
+        context "when assignment posts manually" do
+          before(:each) do
+            assignment.ensure_post_policy(post_manually: true)
+          end
+
+          it "emits an event" do
+            expect(Canvas::LiveEvents).to receive(:grade_changed).once
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
+
+        context "when assignment posts automatically" do
+          before(:each) do
+            assignment.ensure_post_policy(post_manually: false)
+          end
+
+          it "emits two events when grading: one for grading and one for posting" do
+            expect(Canvas::LiveEvents).to receive(:grade_changed).twice
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
+      end
+
+      context "when post policies are not enabled" do
+        before(:once) do
+          PostPolicy.disable_feature!
+        end
+
+        context "when assignment is muted" do
+          before(:each) do
+            assignment.mute!
+          end
+
+          it "emits an event" do
+            expect(Canvas::LiveEvents).to receive(:grade_changed).once
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
+
+        context "when assignment is unmuted" do
+          before(:each) do
+            assignment.unmute!
+          end
+
+          it "emits an event" do
+            expect(Canvas::LiveEvents).to receive(:grade_changed).once
+            assignment.grade_student(student, grade: 10, grader: teacher)
+          end
+        end
       end
     end
   end
@@ -2869,6 +3013,8 @@ describe Assignment do
   describe "muting" do
     before :once do
       assignment_model(course: @course)
+      @student = @course.enroll_student(User.create!, enrollment_state: :active).user
+      @teacher = @course.enroll_teacher(User.create!, enrollment_state: :active).user
     end
 
     it "should default to unmuted" do
@@ -2941,11 +3087,35 @@ describe Assignment do
       @assignment.unmute!
       expect(@assignment.reload).not_to be_post_manually
     end
+
+    describe "grade change audit records" do
+      it "continues to insert grade change records when assignment is muted" do
+        @assignment.mute!
+        expect(Auditors::GradeChange::Stream).to receive(:insert).once
+        @assignment.grade_student(@student, grade: 10, grader: @teacher)
+      end
+
+      it "does not insert a grade change event when muting" do
+        @assignment.grade_student(@student, grade: 10, grader: @teacher)
+        expect(Auditors::GradeChange::Stream).not_to receive(:insert)
+        @assignment.mute!
+      end
+    end
+
+    describe "grade change live events" do
+      it "emits an event for graded submissions when muting" do
+        @assignment.grade_student(@student, grade: 10, grader: @teacher)
+        expect(Canvas::LiveEvents).to receive(:grade_changed).once
+        @assignment.mute!
+      end
+    end
   end
 
   describe "#unmute!" do
     before :once do
       @assignment = assignment_model(course: @course)
+      @student = @course.enroll_student(User.create!, enrollment_state: :active).user
+      @teacher = @course.enroll_teacher(User.create!, enrollment_state: :active).user
     end
 
     it "returns falsey when assignment is not muted" do
@@ -3020,6 +3190,20 @@ describe Assignment do
       it "returns true" do
         expect(@assignment.unmute!).to eq(true)
       end
+    end
+
+    it "does not insert a grade change audit record when unmuting" do
+      @assignment.mute!
+      @assignment.grade_student(@student, grade: 10, grader: @teacher)
+      expect(Auditors::GradeChange::Stream).not_to receive(:insert)
+      @assignment.unmute!
+    end
+
+    it "emits a grade change live event for graded submissions when unmuting" do
+      @assignment.mute!
+      @assignment.grade_student(@student, grade: 10, grader: @teacher)
+      expect(Canvas::LiveEvents).to receive(:grade_changed).once
+      @assignment.unmute!
     end
   end
 
@@ -5422,15 +5606,15 @@ describe Assignment do
       it "triggers a grade change event with the grader_id as the updating_user" do
         @assignment.updating_user = @assistant
 
-        expect(Auditors::GradeChange).to receive(:record).once do |submission|
-          expect(submission.grader_id).to eq @assistant.id
+        expect(Auditors::GradeChange).to receive(:record).once do |args|
+          expect(args.fetch(:submission).grader_id).to eq @assistant.id
         end
         @assignment.update_student_submissions
       end
 
       it "triggers a grade change event using the grader_id on the submission if no updating_user is present" do
-        expect(Auditors::GradeChange).to receive(:record).once do |submission|
-          expect(submission.grader_id).to eq @teacher.id
+        expect(Auditors::GradeChange).to receive(:record).once do |args|
+          expect(args.fetch(:submission).grader_id).to eq @teacher.id
         end
 
         @assignment.update_student_submissions
@@ -7259,6 +7443,78 @@ describe Assignment do
       it "calls broadcast_notifications for submissions" do
         expect(Submission.broadcast_policy_list).to receive(:broadcast).with(student1_submission)
         assignment.post_submissions(submission_ids: [student1_submission.id])
+      end
+
+      describe "grade change audit records" do
+        context "when assignment posts manually" do
+          before(:once) do
+            assignment.ensure_post_policy(post_manually: true)
+          end
+
+          it "inserts a single grade change record" do
+            expect(Auditors::GradeChange::Stream).to receive(:insert).once
+            assignment.grade_student(student1, grade: 10, grader: teacher)
+          end
+
+          it "does not insert a grade change record when posting" do
+            expect(Auditors::GradeChange::Stream).not_to receive(:insert)
+            assignment.post_submissions
+          end
+
+          it "does not insert a grade change record when hiding" do
+            assignment.post_submissions
+            expect(Auditors::GradeChange::Stream).not_to receive(:insert)
+            assignment.hide_submissions
+          end
+        end
+
+        context "when assignment posts automatically" do
+          before(:once) do
+            assignment.ensure_post_policy(post_manually: false)
+          end
+
+          it "inserts a single grade change record" do
+            expect(Auditors::GradeChange::Stream).to receive(:insert).once
+            assignment.grade_student(student1, grade: 10, grader: teacher)
+          end
+        end
+      end
+
+      describe "grade changed live events" do
+        context "when assignment posts manually" do
+          before(:each) do
+            assignment.ensure_post_policy(post_manually: true)
+          end
+
+          it "emits an event when grading" do
+            expect(Canvas::LiveEvents).to receive(:grade_changed).once
+            assignment.grade_student(student1, grade: 10, grader: teacher)
+          end
+
+          it "emits an event when posting graded submissions" do
+            assignment.grade_student(student1, grade: 10, grader: teacher)
+            expect(Canvas::LiveEvents).to receive(:grade_changed).once
+            assignment.post_submissions
+          end
+
+          it "emits an event when hiding graded submissions" do
+            assignment.grade_student(student1, grade: 10, grader: teacher)
+            assignment.post_submissions
+            expect(Canvas::LiveEvents).to receive(:grade_changed).once
+            assignment.hide_submissions
+          end
+        end
+
+        context "when assignment posts automatically" do
+          before(:each) do
+            assignment.ensure_post_policy(post_manually: false)
+          end
+
+          it "emits two events when grading: one for grading and one for posting" do
+            expect(Canvas::LiveEvents).to receive(:grade_changed).twice
+            assignment.grade_student(student1, grade: 10, grader: teacher)
+          end
+        end
       end
 
       context "when given a Progress" do

@@ -18,16 +18,13 @@
 
 import React from 'react'
 import {bool, func, number, shape, string} from 'prop-types'
-import Alert from '@instructure/ui-alerts/lib/components/Alert'
-import View from '@instructure/ui-layout/lib/components/View'
-import FormFieldGroup from '@instructure/ui-form-field/lib/components/FormFieldGroup'
-import NumberInput from '@instructure/ui-number-input/lib/components/NumberInput'
-import PresentationContent from '@instructure/ui-a11y/lib/components/PresentationContent'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import Checkbox from '@instructure/ui-forms/lib/components/Checkbox'
-import Grid, {GridCol, GridRow} from '@instructure/ui-layout/lib/components/Grid'
+import {Alert} from '@instructure/ui-alerts'
+import {View, Grid} from '@instructure/ui-layout'
+import {FormFieldGroup} from '@instructure/ui-form-field'
+import {NumberInput} from '@instructure/ui-number-input'
+import {PresentationContent, ScreenReaderContent} from '@instructure/ui-a11y'
+import {Spinner, Text} from '@instructure/ui-elements'
+import {Checkbox} from '@instructure/ui-forms'
 
 import CanvasSelect from '../../../shared/components/CanvasSelect'
 import NumberHelper from '../../../shared/helpers/numberHelper'
@@ -220,7 +217,7 @@ class LatePoliciesTabPanel extends React.Component {
     if (!this.props.latePolicy.data) {
       return (
         <div id="LatePoliciesTabPanel__Container-noContent">
-          <Spinner title={I18n.t('Loading')} size="large" margin="small" />
+          <Spinner renderTitle={I18n.t('Loading')} size="large" margin="small" />
         </div>
       )
     }
@@ -247,8 +244,8 @@ class LatePoliciesTabPanel extends React.Component {
           <View as="div" margin="small small small large">
             <div className="NumberInput__Container">
               <Grid vAlign="bottom" colSpacing="small">
-                <GridRow>
-                  <GridCol width="auto">
+                <Grid.Row>
+                  <Grid.Col width="auto">
                     <NumberInput
                       id="missing-submission-grade"
                       locale={this.props.locale}
@@ -264,13 +261,13 @@ class LatePoliciesTabPanel extends React.Component {
                       min="0"
                       max="100"
                     />
-                  </GridCol>
-                  <GridCol width="auto">
+                  </Grid.Col>
+                  <Grid.Col width="auto">
                     <View margin="0 0 x-small" display="block">
                       <Text weight="bold">{I18n.t('%')}</Text>
                     </View>
-                  </GridCol>
-                </GridRow>
+                  </Grid.Col>
+                </Grid.Row>
               </Grid>
             </div>
           </View>
@@ -306,8 +303,8 @@ class LatePoliciesTabPanel extends React.Component {
           <View as="div" margin="small small small large">
             <div style={{display: 'flex', alignItems: 'center'}}>
               <Grid vAlign="bottom" colSpacing="small">
-                <GridRow>
-                  <GridCol width="auto">
+                <Grid.Row>
+                  <Grid.Col width="auto">
                     <NumberInput
                       id="late-submission-deduction"
                       locale={this.props.locale}
@@ -323,13 +320,13 @@ class LatePoliciesTabPanel extends React.Component {
                       min="0"
                       max="100"
                     />
-                  </GridCol>
-                  <GridCol width="auto">
+                  </Grid.Col>
+                  <Grid.Col width="auto">
                     <View margin="0 0 x-small" display="block">
                       <Text weight="bold">{I18n.t('%')}</Text>
                     </View>
-                  </GridCol>
-                  <GridCol width="auto">
+                  </Grid.Col>
+                  <Grid.Col width="auto">
                     <CanvasSelect
                       disabled={!this.getLatePolicyAttribute('lateSubmissionDeductionEnabled')}
                       id="late-submission-interval"
@@ -344,10 +341,10 @@ class LatePoliciesTabPanel extends React.Component {
                         {I18n.t('Hour')}
                       </CanvasSelect.Option>
                     </CanvasSelect>
-                  </GridCol>
-                </GridRow>
-                <GridRow>
-                  <GridCol width="auto">
+                  </Grid.Col>
+                </Grid.Row>
+                <Grid.Row>
+                  <Grid.Col width="auto">
                     <NumberInput
                       id="late-submission-minimum-percent"
                       locale={this.props.locale}
@@ -364,13 +361,13 @@ class LatePoliciesTabPanel extends React.Component {
                       max="100"
                       inline
                     />
-                  </GridCol>
-                  <GridCol width="auto">
+                  </Grid.Col>
+                  <Grid.Col width="auto">
                     <View margin="0 0 x-small" display="block">
                       <Text weight="bold">{I18n.t('%')}</Text>
                     </View>
-                  </GridCol>
-                </GridRow>
+                  </Grid.Col>
+                </Grid.Row>
               </Grid>
             </div>
           </View>

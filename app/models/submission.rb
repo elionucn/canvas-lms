@@ -125,6 +125,8 @@ class Submission < ActiveRecord::Base
   validate :ensure_grader_can_grade
   validate :extra_attempts_can_only_be_set_on_online_uploads
   validate :ensure_attempts_are_in_range
+  validate :submission_type_is_valid, :if => :require_submission_type_is_valid
+  attr_accessor :require_submission_type_is_valid
 
   scope :active, -> { where("submissions.workflow_state <> 'deleted'") }
   scope :for_enrollments, -> (enrollments) { where(user_id: enrollments.select(:user_id)) }
@@ -1096,6 +1098,18 @@ class Submission < ActiveRecord::Base
     asset_data
   end
 
+  def submission_type_is_valid
+    case self.submission_type
+    when 'online_text_entry'
+      if self.body.blank?
+        errors.add(:body, 'Text entry submission cannot be empty')
+      end
+    when 'online_url'
+      if self.url.blank?
+        errors.add(:url, 'URL entry submission cannot be empty')
+      end
+    end
+  end
 
   def resubmit_to_vericite
     reset_vericite_assets
@@ -1273,13 +1287,13 @@ class Submission < ActiveRecord::Base
           submit_to_canvadocs = true
           a.create_canvadoc! unless a.canvadoc
           a.shard.activate do
-            CanvadocsSubmission.find_or_create_by(submission: self, canvadoc: a.canvadoc)
+            CanvadocsSubmission.find_or_create_by(submission_id: self.id, canvadoc_id: a.canvadoc.id)
           end
         elsif a.crocodocable?
           submit_to_canvadocs = true
           a.create_crocodoc_document! unless a.crocodoc_document
           a.shard.activate do
-            CanvadocsSubmission.find_or_create_by(submission: self, crocodoc_document: a.crocodoc_document)
+            CanvadocsSubmission.find_or_create_by(submission_id: self.id, crocodoc_document_id: a.crocodoc_document.id)
           end
         end
 
@@ -1451,9 +1465,12 @@ class Submission < ActiveRecord::Base
       self.points_deducted = nil
     end
 
-    if late_policy&.missing_submission_deduction_enabled && self.score.nil?
-      self.score = late_policy.points_for_missing(points_possible, grading_type)
-      self.workflow_state = "graded"
+    if late_policy&.missing_submission_deduction_enabled?
+      if score.nil?
+        self.score = late_policy.points_for_missing(points_possible, grading_type)
+        self.workflow_state = "graded"
+      end
+      self.posted_at ||= Time.zone.now unless assignment.post_manually?
     end
   end
   private :score_missing
@@ -1773,11 +1790,11 @@ class Submission < ActiveRecord::Base
         should_dispatch_submission_grade_changed?
     }
 
-    p.dispatch :assignment_unmuted
+    p.dispatch :submission_posted
     p.to { [student] + User.observing_students_in_course(student, assignment.context) }
     p.whenever { |submission|
       BroadcastPolicies::SubmissionPolicy.new(submission).
-        should_dispatch_assignment_unmuted?
+        should_dispatch_submission_posted?
     }
 
   end
@@ -1829,7 +1846,7 @@ class Submission < ActiveRecord::Base
   end
   private :validate_single_submission
 
-  def grade_change_audit(force_audit = self.assignment_changed_not_sub)
+  def grade_change_audit(force_audit: self.assignment_changed_not_sub, skip_insert: false)
     newly_graded = self.saved_change_to_workflow_state? && self.workflow_state == 'graded'
     grade_changed = (self.saved_changes.keys & %w(grade score excused)).present?
     return true unless newly_graded || grade_changed || force_audit
@@ -1837,7 +1854,9 @@ class Submission < ActiveRecord::Base
     if grade_change_event_author_id.present?
       self.grader_id = grade_change_event_author_id
     end
-    self.class.connection.after_transaction_commit { Auditors::GradeChange.record(self) }
+    self.class.connection.after_transaction_commit do
+      Auditors::GradeChange.record(skip_insert: skip_insert, submission: self)
+    end
   end
 
   scope :with_assignment, -> { joins(:assignment).merge(Assignment.active)}
@@ -2026,7 +2045,7 @@ class Submission < ActiveRecord::Base
     opts[:draft] = !!opts[:draft_comment]
     if opts[:comment].empty?
       if opts[:media_comment_id]
-        opts[:comment] = t('media_comment', "This is a media comment.")
+        opts[:comment] = ''
       elsif opts[:attachments].try(:length)
         opts[:comment] = t('attached_files_comment', "See attached files.")
       end
@@ -2047,7 +2066,7 @@ class Submission < ActiveRecord::Base
     valid_keys = [:comment, :author, :media_comment_id, :media_comment_type,
                   :group_comment_id, :assessment_request, :attachments,
                   :anonymous, :hidden, :provisional_grade_id, :draft, :attempt]
-    if opts[:comment].present?
+    if opts[:comment].present? || opts[:media_comment_id]
       comment = submission_comments.create!(opts.slice(*valid_keys))
     end
     opts[:assessment_request].comment_added(comment) if opts[:assessment_request] && comment
@@ -2479,18 +2498,32 @@ class Submission < ActiveRecord::Base
   end
 
   def assignment_muted_changed
-    self.grade_change_audit(true)
+    self.grade_change_audit(force_audit: true, skip_insert: true)
   end
 
   def without_graded_submission?
     !self.has_submission? && !self.graded?
   end
 
-  def visible_rubric_assessments_for(viewing_user)
+  def visible_rubric_assessments_for(viewing_user, attempt: nil)
     return [] unless posted? || grants_right?(viewing_user, :read_grade)
     return [] unless self.assignment.rubric_association
 
-    filtered_assessments = self.rubric_assessments.select do |a|
+    assessments =
+      if attempt
+        self.rubric_assessments.each_with_object([]) do |assessment, assessments_for_attempt|
+          if assessment.artifact_attempt == attempt
+            assessments_for_attempt << assessment
+          else
+            version = assessment.versions.find { |v| v.model.artifact_attempt == attempt }
+            assessments_for_attempt << version.model if version
+          end
+        end
+      else
+        self.rubric_assessments
+      end
+
+    filtered_assessments = assessments.select do |a|
       a.grants_right?(viewing_user, :read) &&
         a.rubric_association == self.assignment.rubric_association
     end

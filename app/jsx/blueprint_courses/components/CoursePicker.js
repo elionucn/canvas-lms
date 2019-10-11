@@ -20,9 +20,8 @@ import I18n from 'i18n!blueprint_settingsCoursePicker'
 import $ from 'jquery'
 import React from 'react'
 import PropTypes from 'prop-types'
-import ToggleDetails from '@instructure/ui-toggle-details/lib/components/ToggleDetails'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
+import {ToggleDetails} from '@instructure/ui-toggle-details'
+import {Text, Spinner} from '@instructure/ui-elements'
 import 'compiled/jquery.rails_flash_notifications'
 import propTypes from '../propTypes'
 import CourseFilter from './CourseFilter'
@@ -147,7 +146,7 @@ export default class CoursePicker extends React.Component {
             onToggle={this.onToggleCoursePicker}
           >
             {this.props.isLoadingCourses && (<div className="bca-course-picker__loading">
-              <Spinner title={I18n.t('Loading Courses')} />
+              <Spinner renderTitle={I18n.t('Loading Courses')} />
             </div>)}
             <CoursePickerTable
               courses={this.props.courses}

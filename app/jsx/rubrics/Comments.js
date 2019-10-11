@@ -18,11 +18,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import Checkbox from '@instructure/ui-forms/lib/components/Checkbox'
-import Select from '@instructure/ui-forms/lib/components/Select'
-import TextArea from '@instructure/ui-forms/lib/components/TextArea'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {Text} from '@instructure/ui-elements'
+import {Checkbox, Select, TextArea} from '@instructure/ui-forms'
 import I18n from 'i18n!edit_rubricComments'
 
 import { assessmentShape } from './types'
@@ -118,9 +116,11 @@ const commentElement = (assessment) => {
     return (
       <div>
         <Text size="small" weight="bold">{I18n.t("Comments")}</Text>
-        { assessment.comments_html ?
-          <div dangerouslySetInnerHTML={{ __html: assessment.comments_html }} />
-          : assessment.comments }
+        {
+          assessment.comments_html
+            ? <div dangerouslySetInnerHTML={{ __html: assessment.comments_html }} />
+            : <div>{assessment.comments}</div>
+        }
       </div>
     )
   }

@@ -19,10 +19,10 @@
 /* global jsonData */
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Alert from '@instructure/ui-alerts/lib/components/Alert'
-import Button from '@instructure/ui-buttons/lib/components/Button'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import TextArea from '@instructure/ui-forms/lib/components/TextArea'
+import {Alert} from '@instructure/ui-alerts'
+import {Button} from '@instructure/ui-buttons'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {TextArea} from '@instructure/ui-forms'
 import OutlierScoreHelper from 'jsx/grading/helpers/OutlierScoreHelper'
 import quizzesNextSpeedGrading from 'jsx/grading/quizzesNextSpeedGrading'
 import StatusPill from 'jsx/grading/StatusPill'
@@ -40,11 +40,13 @@ import {isGraded, isHidden} from 'jsx/grading/helpers/SubmissionHelper'
 import studentViewedAtTemplate from 'jst/speed_grader/student_viewed_at'
 import submissionsDropdownTemplate from 'jst/speed_grader/submissions_dropdown'
 import speechRecognitionTemplate from 'jst/speed_grader/speech_recognition'
-import Tooltip from '@instructure/ui-overlays/lib/components/Tooltip'
-import IconUpload from '@instructure/ui-icons/lib/Line/IconUpload'
-import IconWarning from '@instructure/ui-icons/lib/Line/IconWarning'
-import IconCheckMarkIndeterminate from '@instructure/ui-icons/lib/Line/IconCheckMarkIndeterminate'
-import Pill from '@instructure/ui-elements/lib/components/Pill'
+import {Tooltip} from '@instructure/ui-overlays'
+import {
+  IconUploadLine,
+  IconWarningLine,
+  IconCheckMarkIndeterminateLine
+} from '@instructure/ui-icons'
+import {Pill} from '@instructure/ui-elements'
 import round from 'compiled/util/round'
 import _ from 'underscore'
 import INST from './INST'
@@ -66,6 +68,7 @@ import SpeedgraderHelpers, {
   setupIsAnonymous,
   setupIsModerated
 } from './speed_grader_helpers'
+import SpeedGraderAlerts from 'jsx/speed_grader/SpeedGraderAlerts'
 import turnitinInfoTemplate from 'jst/_turnitinInfo'
 import turnitinScoreTemplate from 'jst/_turnitinScore'
 import vericiteInfoTemplate from 'jst/_vericiteInfo'
@@ -317,14 +320,19 @@ function mergeStudentsAndSubmission() {
     }
   }
 
+  // If we're using New Gradebook, we'll already have done the filtering by
+  // section on the server, so this is redundant (but not the worst thing in
+  // the world since we still need to send the user away if there are no
+  // students in the section). With Old Gradebook we still need to do it here.
   if (sectionToShow) {
     sectionToShow = sectionToShow.toString()
-    const tempArray = $.grep(
-      jsonData.studentsWithSubmissions,
-      student => $.inArray(sectionToShow, student.section_ids) != -1
+
+    const studentsInSection = jsonData.studentsWithSubmissions.filter(student =>
+      student.section_ids.includes(sectionToShow)
     )
-    if (tempArray.length) {
-      jsonData.studentsWithSubmissions = tempArray
+
+    if (studentsInSection.length > 0) {
+      jsonData.studentsWithSubmissions = studentsInSection
     } else {
       alert(
         I18n.t(
@@ -507,7 +515,6 @@ function setupPostPolicies() {
     sections: jsonData.context.active_course_sections,
     updateSubmission: EG.setOrUpdateSubmission,
     afterUpdateSubmission() {
-      renderPostGradesMenu()
       EG.showGrade()
     }
   })
@@ -720,15 +727,15 @@ function renderProgressIcon(attachment) {
   const mountPoint = document.getElementById('react_pill_container')
   const iconAndTipMap = {
     pending: {
-      icon: <IconUpload />,
+      icon: <IconUploadLine />,
       tip: I18n.t('Uploading Submission')
     },
     failed: {
-      icon: <IconWarning />,
+      icon: <IconWarningLine />,
       tip: I18n.t('Submission Failed to Submit')
     },
     default: {
-      icon: <IconCheckMarkIndeterminate />,
+      icon: <IconCheckMarkIndeterminateLine />,
       tip: I18n.t('No File Submitted')
     }
   }
@@ -1362,19 +1369,33 @@ EG = {
         SpeedgraderHelpers.getHistory().back()
       }
     } else if (!jsonData.studentsWithSubmissions.length) {
-      alert(
-        I18n.t(
-          'alerts.no_active_students',
-          'Sorry, there are either no active students in the course or none are gradable by you.'
+      // If we're trying to load a section with no students, we already showed
+      // a "could not find any students in that section" alert and arranged
+      // for a reload of the page, so don't show a second alert--but also don't
+      // execute the else clause below this one since we don't want to set up
+      // the rest of SpeedGrader
+      if (sectionToShow == null) {
+        alert(
+          I18n.t(
+            'alerts.no_active_students',
+            'Sorry, there are either no active students in the course or none are gradable by you.'
+          )
         )
-      )
-      SpeedgraderHelpers.getHistory().back()
+        SpeedgraderHelpers.getHistory().back()
+      }
     } else {
       $('#speed_grader_loading').hide()
       $('#gradebook_header, #full_width_container').show()
       initDropdown()
       initGroupAssignmentMode()
       setupHandleStatePopped()
+
+      if (ENV.student_group_reason_for_change != null) {
+        SpeedGraderAlerts.showStudentGroupChangeAlert({
+          selectedStudentGroup: ENV.selected_student_group,
+          reasonForChange: ENV.student_group_reason_for_change
+        })
+      }
       setupPostPolicies()
     }
   },
@@ -1767,7 +1788,8 @@ EG = {
     isMostRecent
   ) {
     let $turnitinSimilarityScore = null
-    const showLegacyResubmit = isMostRecent && !submission.has_plagiarism_tool
+    const showLegacyResubmit =
+      isMostRecent && (jsonData.vericite_enabled || jsonData.turnitin_enabled)
 
     // build up new values based on this asset
     if (
@@ -2995,6 +3017,10 @@ EG = {
         prov_grade.rubric_assessments = student.rubric_assessments
         prov_grade.submission_comments = submission.submission_comments
       }
+    }
+
+    if (ENV.post_policies_enabled) {
+      renderPostGradesMenu()
     }
 
     return student
