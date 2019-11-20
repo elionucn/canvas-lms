@@ -26,11 +26,9 @@ import { bindActionCreators } from 'redux'
 import select from '../../shared/select'
 import 'compiled/jquery.rails_flash_notifications'
 
-import Heading from '@instructure/ui-elements/lib/components/Heading'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
-import Alert from '@instructure/ui-alerts/lib/components/Alert'
-import PresentationContent from '@instructure/ui-a11y/lib/components/PresentationContent'
+import {Heading, Text, Spinner} from '@instructure/ui-elements'
+import {Alert} from '@instructure/ui-alerts'
+import {PresentationContent} from '@instructure/ui-a11y'
 
 import CoursePicker from './CoursePicker'
 import AssociationsTable from './AssociationsTable'
@@ -116,7 +114,7 @@ export default class BlueprintAssociations extends React.Component {
       return (
         <div className="bca__overlay">
           <div className="bca__overlay__save-wrapper">
-            <Spinner title={title} />
+            <Spinner renderTitle={title} />
             <Text as="p">{title}</Text>
           </div>
         </div>

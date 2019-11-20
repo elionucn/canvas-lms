@@ -18,7 +18,7 @@
 
 import { changeTab, changeAccordion } from "../actions/ui";
 import { fetchInitialPage, fetchNextPage } from "../actions/data";
-import { fetchImages } from "../actions/images";
+import { fetchInitialImages, fetchNextImages } from "../actions/images";
 import {
   createMediaServerSession,
   fetchFolders,
@@ -31,6 +31,7 @@ import { searchFlickr, openOrCloseFlickrForm } from "../actions/flickr";
 import { toggle as toggleFolder } from "../actions/files";
 import { openOrCloseNewPageForm } from "../actions/links";
 import { fetchInitialDocs, fetchNextDocs } from "../actions/documents";
+import { fetchInitialMedia, fetchNextMedia } from "../actions/media";
 import { changeContext } from "../actions/context";
 
 export default function propsFromDispatch(dispatch) {
@@ -41,7 +42,8 @@ export default function propsFromDispatch(dispatch) {
     fetchNextPage: key => dispatch(fetchNextPage(key)),
     toggleFolder: id => dispatch(toggleFolder(id)),
     fetchFolders: () => dispatch(fetchFolders()),
-    fetchImages: calledFromRender => dispatch(fetchImages(calledFromRender)),
+    fetchInitialImages: () => dispatch(fetchInitialImages()),
+    fetchNextImages: () => dispatch(fetchNextImages()),
     startUpload: (tabContext, fileMetaProps) =>
       dispatch(uploadPreflight(tabContext, fileMetaProps)),
     flickrSearch: term => dispatch(searchFlickr(term)),
@@ -54,6 +56,8 @@ export default function propsFromDispatch(dispatch) {
     saveMediaRecording: (file, editor, dismiss) => dispatch(saveMediaRecording(file, editor, dismiss)),
     fetchInitialDocs: () => dispatch(fetchInitialDocs()),
     fetchNextDocs: () => dispatch(fetchNextDocs()),
+    fetchInitialMedia: () => dispatch(fetchInitialMedia()),
+    fetchNextMedia: () => dispatch(fetchNextMedia()),
     onChangeContext: (newContext) => dispatch(changeContext(newContext))
   };
 }

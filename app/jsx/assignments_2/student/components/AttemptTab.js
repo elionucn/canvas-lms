@@ -18,12 +18,15 @@
 
 import {Assignment} from '../graphqlData/Assignment'
 import {bool, func} from 'prop-types'
-import FilePreview from './AttemptType/FilePreview'
-import FileUpload from './AttemptType/FileUpload'
-import MediaAttempt from './AttemptType/MediaAttempt'
-import React, {Component} from 'react'
+import LoadingIndicator from '../../shared/LoadingIndicator'
+import React, {Component, lazy, Suspense} from 'react'
 import {Submission} from '../graphqlData/Submission'
-import TextEntry from './AttemptType/TextEntry'
+
+const FilePreview = lazy(() => import('./AttemptType/FilePreview'))
+const FileUpload = lazy(() => import('./AttemptType/FileUpload'))
+const MediaAttempt = lazy(() => import('./AttemptType/MediaAttempt'))
+const TextEntry = lazy(() => import('./AttemptType/TextEntry'))
+const UrlEntry = lazy(() => import('./AttemptType/UrlEntry'))
 
 export default class AttemptTab extends Component {
   static propTypes = {
@@ -38,20 +41,27 @@ export default class AttemptTab extends Component {
 
   renderFileUpload = () => {
     return (
-      <FileUpload
-        assignment={this.props.assignment}
-        createSubmissionDraft={this.props.createSubmissionDraft}
-        submission={this.props.submission}
-        updateUploadingFiles={this.props.updateUploadingFiles}
-        uploadingFiles={this.props.uploadingFiles}
-      />
+      <Suspense fallback={<LoadingIndicator />}>
+        <FileUpload
+          assignment={this.props.assignment}
+          createSubmissionDraft={this.props.createSubmissionDraft}
+          submission={this.props.submission}
+          updateUploadingFiles={this.props.updateUploadingFiles}
+          uploadingFiles={this.props.uploadingFiles}
+        />
+      </Suspense>
     )
   }
 
   renderFileAttempt = () => {
     return this.props.submission.state === 'graded' ||
       this.props.submission.state === 'submitted' ? (
-      <FilePreview key={this.props.submission.attempt} files={this.props.submission.attachments} />
+      <Suspense fallback={<LoadingIndicator />}>
+        <FilePreview
+          key={this.props.submission.attempt}
+          files={this.props.submission.attachments}
+        />
+      </Suspense>
     ) : (
       this.renderFileUpload()
     )
@@ -59,17 +69,31 @@ export default class AttemptTab extends Component {
 
   renderTextAttempt = () => {
     return (
-      <TextEntry
-        createSubmissionDraft={this.props.createSubmissionDraft}
-        editingDraft={this.props.editingDraft}
-        submission={this.props.submission}
-        updateEditingDraft={this.props.updateEditingDraft}
-      />
+      <Suspense fallback={<LoadingIndicator />}>
+        <TextEntry
+          createSubmissionDraft={this.props.createSubmissionDraft}
+          editingDraft={this.props.editingDraft}
+          submission={this.props.submission}
+          updateEditingDraft={this.props.updateEditingDraft}
+        />
+      </Suspense>
+    )
+  }
+
+  renderUrlAttempt = () => {
+    return (
+      <Suspense fallback={<LoadingIndicator />}>
+        <UrlEntry />
+      </Suspense>
     )
   }
 
   renderMediaAttempt = () => {
-    return <MediaAttempt assignment={this.props.assignment} />
+    return (
+      <Suspense fallback={<LoadingIndicator />}>
+        <MediaAttempt assignment={this.props.assignment} />
+      </Suspense>
+    )
   }
 
   renderByType() {
@@ -81,6 +105,8 @@ export default class AttemptTab extends Component {
         return this.renderTextAttempt()
       case 'online_upload':
         return this.renderFileAttempt()
+      case 'online_url':
+        return this.renderUrlAttempt()
       default:
         throw new Error('submission type not yet supported in A2')
     }

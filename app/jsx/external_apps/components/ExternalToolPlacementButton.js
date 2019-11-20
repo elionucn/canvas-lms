@@ -23,9 +23,7 @@ import PropTypes from 'prop-types'
 import Modal from '../../shared/components/InstuiModal'
 import store from '../../external_apps/lib/ExternalAppsStore'
 import 'compiled/jquery.rails_flash_notifications'
-import ModalBody from '@instructure/ui-overlays/lib/components/Modal/ModalBody';
-import ModalFooter from '@instructure/ui-overlays/lib/components/Modal/ModalFooter';
-import Button from '@instructure/ui-buttons/lib/components/Button';
+import {Button} from '@instructure/ui-buttons'
 
 export default class ExternalToolPlacementButton extends React.Component {
   static propTypes = {
@@ -100,7 +98,8 @@ export default class ExternalToolPlacementButton extends React.Component {
       student_context_card: I18n.t('Student Context Card'),
       tool_configuration: I18n.t('Tool Configuration'),
       user_navigation: I18n.t('User Navigation'),
-      wiki_page_menu: I18n.t('Page Menu')
+      wiki_page_menu: I18n.t('Page Menu'),
+      wiki_index_menu: I18n.t('Pages Index Menu')
     }
 
     const tool = this.state.tool
@@ -125,12 +124,12 @@ export default class ExternalToolPlacementButton extends React.Component {
       onDismiss={this.closeModal}
       label={I18n.t('App Placements')}
     >
-      <ModalBody>
+      <Modal.Body>
         {this.placements() || I18n.t('No Placements Enabled')}
-      </ModalBody>
-      <ModalFooter>
+      </Modal.Body>
+      <Modal.Footer>
         <Button onClick={this.closeModal}>{I18n.t('Close')}</Button>
-      </ModalFooter>
+      </Modal.Footer>
     </Modal>
   )
 

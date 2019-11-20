@@ -74,8 +74,8 @@ module Types
 
     implements GraphQL::Types::Relay::Node
     implements Interfaces::TimestampInterface
+    implements Interfaces::LegacyIDInterface
 
-    field :_id, ID, "legacy canvas id", method: :id, null: false
     global_id_field :id
     field :name, String, null: false
     field :course_code, String, "course short name", null: true
@@ -88,6 +88,11 @@ module Types
     implements Interfaces::AssignmentsConnectionInterface
     def assignments_connection(filter: {})
       super(filter: filter, course: course)
+    end
+
+    field :account, AccountType, null: true
+    def account
+      load_association(:account)
     end
 
     field :sections_connection, SectionType.connection_type, null: true

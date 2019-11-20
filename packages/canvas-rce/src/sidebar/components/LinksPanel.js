@@ -112,7 +112,7 @@ function LinksPanel(props) {
       : "";
 
   return (
-    <div>
+    <div data-testid="instructure_links-LinksPanel">
       <p>
         {props.contextType === "course"
           ? formatMessage("Link to other content in the course.")

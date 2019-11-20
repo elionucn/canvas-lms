@@ -16,24 +16,19 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {ApolloClient} from 'apollo-client'
-import errorShipUrl from '../../../SVG/ErrorShip.svg'
+import errorShipUrl from 'jsx/shared/svg/ErrorShip.svg'
 import {EXTERNAL_TOOLS_QUERY} from '../../../graphqlData/Queries'
+import {func, string} from 'prop-types'
 import GenericErrorPage from '../../../../../shared/components/GenericErrorPage/index'
 import I18n from 'i18n!assignments_2_initial_query'
 import LoadingIndicator from '../../../../shared/LoadingIndicator'
 import {Query} from 'react-apollo'
 import React from 'react'
-import {string, instanceOf} from 'prop-types'
 import UserGroupsQuery from './UserGroupsQuery'
 
 const ExternalToolsQuery = props => {
   return (
-    <Query
-      query={EXTERNAL_TOOLS_QUERY}
-      variables={{courseID: props.courseID}}
-      client={props.client}
-    >
+    <Query query={EXTERNAL_TOOLS_QUERY} variables={{courseID: props.courseID}}>
       {({loading, error, data}) => {
         if (loading) return <LoadingIndicator />
         if (error) {
@@ -50,9 +45,9 @@ const ExternalToolsQuery = props => {
           <UserGroupsQuery
             assignmentID={props.assignmentID}
             courseID={props.courseID}
+            handleCanvasFileSelect={props.handleCanvasFileSelect}
             tools={data.course.externalToolsConnection.nodes}
             userID={props.userID}
-            client={props.client}
           />
         )
       }}
@@ -62,8 +57,8 @@ const ExternalToolsQuery = props => {
 ExternalToolsQuery.propTypes = {
   assignmentID: string.isRequired,
   courseID: string.isRequired,
-  userID: string.isRequired,
-  client: instanceOf(ApolloClient)
+  handleCanvasFileSelect: func.isRequired,
+  userID: string.isRequired
 }
 
 export default ExternalToolsQuery

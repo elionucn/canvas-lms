@@ -24,13 +24,13 @@ import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import {SubmissionFile} from '../../graphqlData/File'
 
-import {Button} from '@instructure/ui-buttons/lib/components'
-import {Flex, FlexItem} from '@instructure/ui-layout'
-import IconDownload from '@instructure/ui-icons/lib/Line/IconDownload'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import theme from '@instructure/ui-themes/lib/canvas/base'
-import Tooltip from '@instructure/ui-overlays/lib/components/Tooltip'
+import {Button} from '@instructure/ui-buttons'
+import {Flex} from '@instructure/ui-layout'
+import {IconDownloadLine} from '@instructure/ui-icons'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {Text} from '@instructure/ui-elements'
+import theme from '@instructure/canvas-theme'
+import {Tooltip} from '@instructure/ui-overlays'
 
 export default class FilePreview extends Component {
   static propTypes = {
@@ -165,7 +165,7 @@ export default class FilePreview extends Component {
             <div style={{display: 'block'}}>
               <Button
                 margin="medium auto"
-                icon={IconDownload}
+                icon={IconDownloadLine}
                 href={selectedFile.url}
                 disabled={!selectedFile.url}
               >
@@ -195,11 +195,11 @@ export default class FilePreview extends Component {
         <div style={{margin: '-0.75rem'}}>
           <Flex>
             {this.props.files.length > 1 && (
-              <FlexItem align="start">{this.renderFileIcons()}</FlexItem>
+              <Flex.Item align="start">{this.renderFileIcons()}</Flex.Item>
             )}
-            <FlexItem shrink grow align="start">
+            <Flex.Item shrink grow align="start">
               {this.renderFilePreview()}
-            </FlexItem>
+            </Flex.Item>
           </Flex>
         </div>
       )

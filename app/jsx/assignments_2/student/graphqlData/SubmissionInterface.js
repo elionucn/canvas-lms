@@ -27,6 +27,7 @@ export const SubmissionInterface = {
         ...SubmissionFile
       }
       attempt
+      body
       deductedPoints
       enteredGrade
       grade
@@ -40,6 +41,7 @@ export const SubmissionInterface = {
       submissionStatus
       submittedAt
       unreadCommentCount
+      url
     }
     ${SubmissionFile.fragment}
     ${SubmissionDraft.fragment}
@@ -48,6 +50,7 @@ export const SubmissionInterface = {
   shape: shape({
     attachments: arrayOf(SubmissionFile.shape),
     attempt: number.isRequired,
+    body: string,
     deductedPoints: number,
     enteredGrade: string,
     grade: string,
@@ -58,7 +61,8 @@ export const SubmissionInterface = {
     submissionDraft: SubmissionDraft.shape,
     submissionStatus: string,
     submittedAt: string,
-    unreadCommentCount: number.isRequired
+    unreadCommentCount: number.isRequired,
+    url: string
   })
 }
 
@@ -66,6 +70,7 @@ export const SubmissionInterfaceDefaultMocks = {
   SubmissionInterface: () => ({
     attachments: () => [],
     attempt: 0,
+    body: null,
     deductedPoints: null,
     enteredGrade: null,
     grade: null,
@@ -76,6 +81,7 @@ export const SubmissionInterfaceDefaultMocks = {
     submissionDraft: null,
     submissionStatus: 'unsubmitted',
     submittedAt: null,
-    unreadCommentCount: 0
+    unreadCommentCount: 0,
+    url: null
   })
 }

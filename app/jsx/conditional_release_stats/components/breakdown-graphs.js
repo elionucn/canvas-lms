@@ -18,7 +18,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import Spinner from '@instructure/ui-elements/lib/components/Spinner'
+import {Spinner} from '@instructure/ui-elements'
 import I18n from 'i18n!cyoe_assignment_sidebar_breakdown_graphs'
 import {transformScore} from '../../shared/conditional_release/score'
 import BarGraph from './breakdown-graph-bar'
@@ -40,7 +40,7 @@ import BarGraph from './breakdown-graph-bar'
       if (this.props.isLoading) {
         return (
           <div className='crs-breakdown-graph__loading'>
-            <Spinner title={I18n.t('Loading')} size='small' />
+            <Spinner renderTitle={I18n.t('Loading')} size='small' />
             <p>{I18n.t('Loading Data..')}</p>
           </div>
         )

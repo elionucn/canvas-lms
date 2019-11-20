@@ -21,16 +21,11 @@ import I18n from 'i18n!assignments_2_text_entry'
 import React from 'react'
 import RichContentEditor from 'jsx/shared/rce/RichContentEditor'
 import {Submission} from '../../graphqlData/Submission'
-
-import Billboard from '@instructure/ui-billboard/lib/components/Billboard'
-import Button from '@instructure/ui-buttons/lib/components/Button'
-import IconDocument from '@instructure/ui-icons/lib/Line/IconDocument'
-import IconText from '@instructure/ui-icons/lib/Line/IconText'
-import IconTrash from '@instructure/ui-icons/lib/Line/IconTrash'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import View from '@instructure/ui-layout/lib/components/View'
-
-RichContentEditor.preloadRemoteModule()
+import {Billboard} from '@instructure/ui-billboard'
+import {Button} from '@instructure/ui-buttons'
+import {IconDocumentLine, IconTextLine, IconTrashLine} from '@instructure/ui-icons'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {View} from '@instructure/ui-layout'
 
 export default class TextEntry extends React.Component {
   static propTypes = {
@@ -56,25 +51,45 @@ export default class TextEntry extends React.Component {
 
   componentDidMount() {
     this._isMounted = true
+    window.addEventListener('beforeunload', this.beforeunload.bind(this))
 
     if (this.getDraftBody() !== null && this.props.editingDraft && !this.state.editorLoaded) {
       this.loadRCE()
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     if (this.getDraftBody() !== null && this.props.editingDraft && !this.state.editorLoaded) {
       this.loadRCE()
     } else if (!this.props.editingDraft && this.state.editorLoaded) {
       this.unloadRCE()
     }
+
+    if (!this.props.editingDraft) {
+      if (['submitted', 'graded'].includes(this.props.submission.state)) {
+        this.viewTextSubmission.focus()
+      } else if (prevProps.editingDraft) {
+        this.editTextEntryButton.focus()
+      } else if (this.getDraftBody() === null) {
+        this.startTextEntryButton.focus()
+      }
+    }
   }
 
   componentWillUnmount() {
     this._isMounted = false
+    window.removeEventListener('beforeunload', this.beforeunload.bind(this))
 
     if (this.state.editorLoaded && !this.props.editingDraft) {
       this.unloadRCE()
+    }
+  }
+
+  // Warn the user if they are attempting to leave the page with unsaved data
+  beforeunload(e) {
+    if (this.state.editorLoaded && this.getDraftBody() !== this.getRCEText()) {
+      e.preventDefault()
+      e.returnValue = true
     }
   }
 
@@ -170,7 +185,7 @@ export default class TextEntry extends React.Component {
     }
   }
 
-  handleCancelButton = () => {
+  handleDeleteButton = () => {
     if (this._isMounted) {
       this.updateSubmissionDraft(null)
       this.props.updateEditingDraft(false)
@@ -213,15 +228,34 @@ export default class TextEntry extends React.Component {
     )
   }
 
+  renderSubmission() {
+    return (
+      <View
+        as="div"
+        borderWidth="small"
+        padding="xx-small"
+        data-testid="text-submission"
+        ref={el => {
+          this.viewTextSubmission = el
+        }}
+      >
+        <div dangerouslySetInnerHTML={{__html: this.props.submission.body}} />
+      </View>
+    )
+  }
+
   renderSavedDraft() {
     return (
       <Billboard
         heading={I18n.t('Text Entry')}
-        hero={<IconDocument />}
+        hero={<IconDocumentLine />}
         message={
           <div>
             <Button
               data-testid="edit-text-draft"
+              ref={el => {
+                this.editTextEntryButton = el
+              }}
               margin="0 x-small 0 0"
               onClick={() => {
                 this.props.updateEditingDraft(true)
@@ -231,8 +265,8 @@ export default class TextEntry extends React.Component {
             </Button>
             <Button
               data-testid="delete-text-draft"
-              icon={IconTrash}
-              onClick={this.handleCancelButton}
+              icon={IconTrashLine}
+              onClick={this.handleDeleteButton}
             >
               <ScreenReaderContent>{I18n.t('Remove submission draft')}</ScreenReaderContent>
             </Button>
@@ -247,9 +281,16 @@ export default class TextEntry extends React.Component {
       <View as="div" borderWidth="small" data-testid="text-entry">
         <Billboard
           heading={I18n.t('Text Entry')}
-          hero={<IconText color="brand" />}
+          hero={<IconTextLine color="brand" />}
           message={
-            <Button data-testid="start-text-entry" onClick={this.handleStartButton}>
+            <Button
+              data-testid="start-text-entry"
+              id="start-text-entry"
+              onClick={this.handleStartButton}
+              ref={el => {
+                this.startTextEntryButton = el
+              }}
+            >
               {I18n.t('Start Entry')}
             </Button>
           }
@@ -259,7 +300,9 @@ export default class TextEntry extends React.Component {
   }
 
   render() {
-    if (this.getDraftBody() === null) {
+    if (['submitted', 'graded'].includes(this.props.submission.state)) {
+      return this.renderSubmission()
+    } else if (this.getDraftBody() === null) {
       return this.renderInitialBox()
     } else {
       return this.props.editingDraft ? this.renderEditor() : this.renderSavedDraft()

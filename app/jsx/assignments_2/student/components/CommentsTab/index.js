@@ -19,7 +19,7 @@ import {Assignment} from '../../graphqlData/Assignment'
 import CommentContent from './CommentContent'
 import CommentTextArea from './CommentTextArea'
 import ErrorBoundary from '../../../../shared/components/ErrorBoundary'
-import errorShipUrl from '../../SVG/ErrorShip.svg'
+import errorShipUrl from 'jsx/shared/svg/ErrorShip.svg'
 import GenericErrorPage from '../../../../shared/components/GenericErrorPage/index'
 import LoadingIndicator from '../../../shared/LoadingIndicator'
 import {Query} from 'react-apollo'
@@ -63,7 +63,10 @@ function CommentsTab(props) {
           >
             <div data-testid="comments-container">
               <CommentTextArea assignment={props.assignment} submission={props.submission} />
-              <CommentContent comments={data.submissionComments.commentsConnection.nodes} />
+              <CommentContent
+                comments={data.submissionComments.commentsConnection.nodes}
+                submission={props.submission}
+              />
             </div>
           </ErrorBoundary>
         )

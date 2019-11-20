@@ -59,8 +59,12 @@ export function ltiMessageHandler(e) {
         context = "accounts/" + ENV.DOMAIN_ROOT_ACCOUNT_ID;
       }
 
-      const tool_launch_url = `${data}"&full_win_launch_requested=1&platform_redirect_url=${window.location}`;
-      const launch_url = `${window.location.origin}/${context}/external_tools/retrieve?display=borderless&url=${encodeURIComponent(tool_launch_url)}`;
+      const tool_launch_url = new URL(data);
+      tool_launch_url.searchParams.append("full_win_launch_requested", "1");
+      // xsslint safeString.property window.location
+      tool_launch_url.searchParams.append("platform_redirect_url", window.location);
+
+      const launch_url = `${window.location.origin}/${context}/external_tools/retrieve?display=borderless&url=${encodeURIComponent(tool_launch_url.toString())}`;
       window.location.assign(launch_url);
     } else {
       console.error(`invalid messageType: ${e.data.messageType}`);
@@ -99,6 +103,8 @@ export function ltiMessageHandler(e) {
               message.height = window.innerHeight;
               message.width = window.innerWidth;
               message.offset = $('.tool_content_wrapper').offset();
+              message.footer = $('#fixed_bottom').height() || 0;
+              message.scrollY = window.scrollY;
               const strMessage = JSON.stringify(message);
 
               iframe.contentWindow.postMessage(strMessage, '*');
@@ -129,6 +135,27 @@ export function ltiMessageHandler(e) {
       case 'lti.screenReaderAlert':
         $.screenReaderFlashMessageExclusive(message.body.html || message.body)
         break;
+      case 'lti.enableScrollEvents': {
+        const iframe = findDomForWindow(e.source);
+        if (iframe) {
+          let timeout;
+          window.addEventListener('scroll', () => {
+            // requesting animation frames effectively debounces the scroll messages being sent
+            if (timeout) {
+              window.cancelAnimationFrame(timeout);
+            }
+
+            timeout = window.requestAnimationFrame(() => {
+              const msg = JSON.stringify({
+                subject: 'lti.scroll',
+                scrollY: window.scrollY
+              });
+              iframe.contentWindow.postMessage(msg, '*');
+            });
+          }, false);
+        }
+        break;
+      }
     }
   } catch(err) {
     (console.error || console.log).call(console, 'invalid message received from');

@@ -20,14 +20,12 @@ import $ from 'jquery'
 import React from 'react'
 import PropTypes from 'prop-types'
 import I18n from 'i18n!appointment_groups'
-import Breadcrumb, { BreadcrumbLink } from '@instructure/ui-breadcrumb/lib/components/Breadcrumb'
-import Button from '@instructure/ui-buttons/lib/components/Button'
-import Grid, { GridCol, GridRow } from '@instructure/ui-layout/lib/components/Grid'
-import FormFieldGroup from '@instructure/ui-form-field/lib/components/FormFieldGroup'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import TextArea from '@instructure/ui-forms/lib/components/TextArea'
-import TextInput from '@instructure/ui-forms/lib/components/TextInput'
-import Checkbox from '@instructure/ui-forms/lib/components/Checkbox'
+import {Breadcrumb} from '@instructure/ui-breadcrumb'
+import {Button} from '@instructure/ui-buttons'
+import {Grid} from '@instructure/ui-layout'
+import {FormFieldGroup} from '@instructure/ui-form-field'
+import {ScreenReaderContent} from '@instructure/ui-a11y'
+import {TextArea, TextInput, Checkbox} from '@instructure/ui-forms'
 import 'compiled/jquery.rails_flash_notifications'
 import 'jquery.instructure_forms'
 import 'jquery.instructure_date_and_time'
@@ -221,12 +219,12 @@ import TimeBlockSelector from './TimeBlockSelector'
       return (
         <div className="EditPage">
           <Breadcrumb label={I18n.t('You are here:')}>
-            <BreadcrumbLink href="/calendar">{I18n.t('Calendar')}</BreadcrumbLink>
-            <BreadcrumbLink>
-              {I18n.t('Edit %{pageTitle}', {
-                pageTitle: this.state.appointmentGroup.title
-              })}
-            </BreadcrumbLink>
+            <Breadcrumb.Link href="/calendar">{I18n.t('Calendar')}</Breadcrumb.Link>
+            {this.state.appointmentGroup.title && (
+              <Breadcrumb.Link>
+                {I18n.t('Edit %{pageTitle}', {pageTitle: this.state.appointmentGroup.title})}
+              </Breadcrumb.Link>
+            )}
           </Breadcrumb>
           <ScreenReaderContent>
             <h1>
@@ -237,15 +235,15 @@ import TimeBlockSelector from './TimeBlockSelector'
           </ScreenReaderContent>
           <div className="EditPage__Header">
             <Grid vAlign="middle">
-              <GridRow hAlign="end">
-                <GridCol width="auto">
+              <Grid.Row hAlign="end">
+                <Grid.Col width="auto">
                   <Button onClick={this.deleteGroup} disabled={this.state.isDeleting}>{I18n.t('Delete Group')}</Button>
                   &nbsp;
                   <Button href="/calendar">{I18n.t('Cancel')}</Button>
                   &nbsp;
                   <Button onClick={this.handleSave} variant="primary">{I18n.t('Save')}</Button>
-                </GridCol>
-              </GridRow>
+                </Grid.Col>
+              </Grid.Row>
             </Grid>
           </div>
           <FormFieldGroup

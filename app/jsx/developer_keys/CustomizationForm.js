@@ -19,9 +19,9 @@ import invert from 'lodash/invert'
 import I18n from 'i18n!react_developer_keys'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Heading from '@instructure/ui-elements/lib/components/Heading'
-import TextArea from '@instructure/ui-forms/lib/components/TextArea'
-import View from '@instructure/ui-layout/lib/components/View'
+import {Heading} from '@instructure/ui-elements'
+import {TextArea} from '@instructure/ui-forms'
+import {View} from '@instructure/ui-layout'
 import CustomizationTable from './CustomizationTable'
 import OtherOptions from './OtherOptions'
 
@@ -109,12 +109,12 @@ export default class CustomizationForm extends React.Component {
       return []
     }
 
-    if (!(extension && extension.settings)) {
+    if (!extension?.settings?.placements) {
       return []
     }
 
     // Intersection of requested placements and valid placements
-    return Object.keys(extension.settings).filter(placement => validPlacements.includes(placement))
+    return extension.settings.placements.filter(placement => validPlacements.includes(placement.placement))
   }
 
   componentDidMount() {
@@ -147,12 +147,12 @@ export default class CustomizationForm extends React.Component {
 
   messageTypeFor = placement => {
     const extension = this.canvasExtension
-
-    if (!(extension && extension.settings[placement])) {
+    const place = extension?.settings?.placements?.find(p => p.placement === placement)
+    if (!place) {
       return null
     }
 
-    return extension.settings[placement].message_type
+    return place.message_type
   }
 
   toggleArrayItem(array, value) {
@@ -200,7 +200,7 @@ export default class CustomizationForm extends React.Component {
     return (
       <CustomizationTable
         name={I18n.t('Placements')}
-        options={placements}
+        options={placements.map(p => p.placement)}
         onOptionToggle={this.handlePlacementChange}
         selectedOptions={this.props.disabledPlacements}
         type="placement"

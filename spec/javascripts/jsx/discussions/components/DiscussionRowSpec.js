@@ -48,7 +48,7 @@ const makeProps = (props = {}) => merge({
   },
   canPublish: false,
   masterCourseData: {},
-  setCopyToOpen: () => {},
+  setCopyTo: () => {},
   setSendToOpen: () => {},
   DIRECT_SHARE_ENABLED: false
 }, props)
@@ -249,7 +249,7 @@ test('renders neither a due or to do date if neither are available', () => {
 test('renders the SectionsTooltip component', () => {
   const discussion = { user_count: 200 }
   const tree = mount(<DiscussionRow {...makeProps({ discussion })} />)
-  equal(tree.find('SectionsTooltip Text').text(), 'All Sections')
+  equal(tree.find('SectionsTooltip Text').at(0).text(), 'All Sections')
   tree.unmount()
 })
 
@@ -259,7 +259,7 @@ test('renders the SectionsTooltip component with sections', () => {
     { "id": 5, "course_id": 1, "name": "section 2", "user_count": 1 }
   ]}
   const tree = mount(<DiscussionRow {...makeProps({ discussion })} />)
-  equal(tree.find('SectionsTooltip Text').text(), '2 Sectionssection 4section 2')
+  equal(tree.find('SectionsTooltip Text').at(0).text(), '2 Sectionssection 4section 2')
   tree.unmount()
 })
 
@@ -317,7 +317,7 @@ test('renders master course lock icon if masterCourseData is provided', (assert)
 
 test('renders drag icon', () => {
   const tree = mount(<DiscussionRow {...makeProps({draggable: true})} />)
-  const node = tree.find('IconDragHandle')
+  const node = tree.find('IconDragHandleLine')
   ok(node.exists())
   tree.unmount()
 })
@@ -390,7 +390,7 @@ test('opens the copyTo tray when menu item is selected', () => {
   const props = makeProps({
     displayManageMenu: true,
     DIRECT_SHARE_ENABLED: true,
-    setCopyToOpen: copySpy,
+    setCopyTo: copySpy
   })
   const tree = mount(<DiscussionRow {...props} />)
   tree
@@ -398,7 +398,10 @@ test('opens the copyTo tray when menu item is selected', () => {
     .find('button')
     .simulate('click')
   document.querySelector('#copyTo-discussion-menu-option').click()
-  ok(copySpy.calledOnce)
+  deepEqual(copySpy.firstCall.args[0], {
+    open: true,
+    selection: {discussion_topics: [props.discussion.id]}
+  })
   tree.unmount()
 })
 
@@ -407,7 +410,7 @@ test('opens the sendTo tray when menu item is selected', () => {
   const props = makeProps({
     displayManageMenu: true,
     DIRECT_SHARE_ENABLED: true,
-    setSendToOpen: sendSpy
+    setSendTo: sendSpy
   })
   const tree = mount(<DiscussionRow {...props} />)
   tree
@@ -415,7 +418,13 @@ test('opens the sendTo tray when menu item is selected', () => {
     .find('button')
     .simulate('click')
   document.querySelector('#sendTo-discussion-menu-option').click()
-  ok(sendSpy.calledOnce)
+  deepEqual(sendSpy.firstCall.args[0], {
+    open: true,
+    selection: {
+      content_type: 'discussion_topic',
+      content_id: props.discussion.id
+    }
+  })
   tree.unmount()
 })
 

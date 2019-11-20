@@ -19,12 +19,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import I18n from 'i18n!dashcards'
-import Popover, {
-  PopoverTrigger,
-  PopoverContent
-} from '@instructure/ui-overlays/lib/components/Popover'
-import TabList, {TabPanel} from '@instructure/ui-tabs/lib/components/TabList'
-import CloseButton from '@instructure/ui-buttons/lib/components/CloseButton'
+import {Popover} from '@instructure/ui-overlays'
+import {TabList} from '@instructure/ui-tabs'
+import {CloseButton} from '@instructure/ui-buttons'
 
 import ColorPicker from '../shared/ColorPicker'
 import DashboardCardMovementMenu from './DashboardCardMovementMenu'
@@ -152,8 +149,8 @@ export default class DashboardCardMenu extends React.Component {
         onShow={handleShow}
         contentRef={popoverContentRef}
       >
-        <PopoverTrigger>{trigger}</PopoverTrigger>
-        <PopoverContent>
+        <Popover.Trigger>{trigger}</Popover.Trigger>
+        <Popover.Content>
           <CloseButton
             buttonRef={c => (this._closeButton = c)}
             placement="end"
@@ -170,21 +167,21 @@ export default class DashboardCardMenu extends React.Component {
                   variant="minimal"
                   size="small"
                 >
-                  <TabPanel
+                  <TabList.Panel
                     padding="none"
                     title={I18n.t('Color')}
                     tabRef={c => (this._colorTab = c)}
                   >
                     {colorPicker}
-                  </TabPanel>
-                  <TabPanel padding="none" title={I18n.t('Move')}>
+                  </TabList.Panel>
+                  <TabList.Panel padding="none" title={I18n.t('Move')}>
                     {movementMenu}
-                  </TabPanel>
+                  </TabList.Panel>
                 </TabList>
               </div>
             }
           </div>
-        </PopoverContent>
+        </Popover.Content>
       </Popover>
     )
   }

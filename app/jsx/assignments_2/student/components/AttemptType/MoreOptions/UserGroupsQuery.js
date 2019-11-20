@@ -16,9 +16,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {ApolloClient} from 'apollo-client'
-import {arrayOf, string, instanceOf} from 'prop-types'
-import errorShipUrl from '../../../SVG/ErrorShip.svg'
+import {arrayOf, func, string} from 'prop-types'
+import errorShipUrl from 'jsx/shared/svg/ErrorShip.svg'
 import {ExternalTool} from '../../../graphqlData/ExternalTool'
 import GenericErrorPage from '../../../../../shared/components/GenericErrorPage/index'
 import I18n from 'i18n!assignments_2_initial_query'
@@ -30,7 +29,7 @@ import {USER_GROUPS_QUERY} from '../../../graphqlData/Queries'
 
 const UserGroupsQuery = props => {
   return (
-    <Query query={USER_GROUPS_QUERY} variables={{userID: props.userID}} client={props.client}>
+    <Query query={USER_GROUPS_QUERY} variables={{userID: props.userID}}>
       {({loading, error, data}) => {
         if (loading) return <LoadingIndicator />
         if (error) {
@@ -47,6 +46,7 @@ const UserGroupsQuery = props => {
           <Tools
             assignmentID={props.assignmentID}
             courseID={props.courseID}
+            handleCanvasFileSelect={props.handleCanvasFileSelect}
             tools={props.tools}
             userGroups={data.legacyNode}
           />
@@ -58,9 +58,9 @@ const UserGroupsQuery = props => {
 UserGroupsQuery.propTypes = {
   assignmentID: string.isRequired,
   courseID: string.isRequired,
+  handleCanvasFileSelect: func.isRequired,
   tools: arrayOf(ExternalTool.shape),
-  userID: string.isRequired,
-  client: instanceOf(ApolloClient)
+  userID: string.isRequired
 }
 
 export default UserGroupsQuery

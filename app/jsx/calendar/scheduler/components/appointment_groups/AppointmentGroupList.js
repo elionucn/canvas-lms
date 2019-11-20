@@ -21,11 +21,9 @@ import PropTypes from 'prop-types'
 import classnames from 'classnames'
 import I18n from 'i18n!appointment_groups'
 import natcompare from 'compiled/util/natcompare'
-import Grid, { GridRow, GridCol } from '@instructure/ui-layout/lib/components/Grid'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import Pill from '@instructure/ui-elements/lib/components/Pill'
-import IconCalendarAddLine from '@instructure/ui-icons/lib/Line/IconCalendarAdd'
-import IconCalendarReservedLine from '@instructure/ui-icons/lib/Line/IconCalendarReserved'
+import {Grid} from '@instructure/ui-layout'
+import {Text, Pill} from '@instructure/ui-elements'
+import {IconCalendarAddLine, IconCalendarReservedLine} from '@instructure/ui-icons'
 import $ from 'jquery'
 import 'jquery.instructure_date_and_time'
 
@@ -69,16 +67,16 @@ import 'jquery.instructure_date_and_time'
           hAlign="start"
           vAlign="middle"
         >
-          <GridRow>
-            <GridCol
+          <Grid.Row>
+            <Grid.Col
               width="auto">
               <span className={iconClasses}>
                 {
                   (isReserved) ? <IconCalendarReservedLine /> : <IconCalendarAddLine />
                 }
               </span>
-            </GridCol>
-            <GridCol
+            </Grid.Col>
+            <Grid.Col
               colSpacing="small"
               width={4}>
               <span className="AppointmentGroupList__Appointment-timeLabel">
@@ -86,22 +84,22 @@ import 'jquery.instructure_date_and_time'
                   {timeLabel}
                 </Text>
               </span>
-            </GridCol>
-            <GridCol
+            </Grid.Col>
+            <Grid.Col
               width="auto">
               <span className={badgeClasses}>
                 {statusText}
               </span>
-            </GridCol>
-            <GridCol
+            </Grid.Col>
+            <Grid.Col
               colSpacing="small">
               <span className="AppointmentGroupList__Appointment-label">
                 <Text>
                   {participantList}
                 </Text>
               </span>
-            </GridCol>
-          </GridRow>
+            </Grid.Col>
+          </Grid.Row>
         </Grid>
       </div>
     )

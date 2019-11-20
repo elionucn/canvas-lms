@@ -21,7 +21,6 @@ import React from 'react'
 import {mount} from 'enzyme'
 import AssignmentExternalTools from 'jsx/assignments/AssignmentExternalTools'
 
-
 QUnit.module('AssignmentExternalTools', hooks => {
   let toolDefinitions;
   let wrapper;
@@ -70,6 +69,8 @@ QUnit.module('AssignmentExternalTools', hooks => {
     ]
     sandbox.stub($, 'ajax').returns({status: 200, data: toolDefinitions});
     ENV.LTI_LAUNCH_FRAME_ALLOWANCES = ['midi', 'media']
+
+    sandbox.fetch.mock('path:/api/v1/courses/1/lti_apps/launch_definitions', 200)
   }
 
   function teardown () {
@@ -237,4 +238,17 @@ QUnit.module('AssignmentExternalTools', hooks => {
     equal(computedUrl, correctUrl);
   })
 
+  test('it sets the "data-lti-launch" attribute on each iframe', () => {
+    wrapper = mount(
+      <AssignmentExternalTools.configTools
+        placement="assignment_view"
+        courseId={1}
+        assignmentId={1}
+      />
+    )
+    wrapper.setState({tools: toolDefinitions})
+    wrapper.find('.tool_launch').forEach(iframe => {
+      equal(iframe.instance().getAttribute('data-lti-launch'), 'true')
+    })
+  })
 })

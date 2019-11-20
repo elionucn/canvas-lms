@@ -55,6 +55,7 @@ class ContextModulesController < ApplicationController
       @collapsed_modules = ContextModuleProgression.for_user(@current_user).for_modules(@modules).pluck(:context_module_id, :collapsed).select{|cm_id, collapsed| !!collapsed }.map(&:first)
 
       @can_edit = can_do(@context, @current_user, :manage_content)
+      @can_view_grades = can_do(@context, @current_user, :view_all_grades)
       @is_student = @context.grants_right?(@current_user, session, :participate_as_student)
       @can_view_unpublished = @context.grants_right?(@current_user, session, :read_as_admin)
 
@@ -79,7 +80,7 @@ class ContextModulesController < ApplicationController
         :FILES_CONTEXTS => [{asset_string: @context.asset_string}],
         :MODULE_FILE_DETAILS => module_file_details,
         :MODULE_FILE_PERMISSIONS => {
-           usage_rights_required: @context.feature_enabled?(:usage_rights_required),
+           usage_rights_required: @context.usage_rights_required?,
            manage_files: @context.grants_right?(@current_user, session, :manage_files)
         }
 

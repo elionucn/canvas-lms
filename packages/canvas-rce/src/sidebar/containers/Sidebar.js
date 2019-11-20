@@ -16,10 +16,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Sidebar from "../components/Sidebar";
-import sidebarHandlers from "./sidebarHandlers";
-import { connect } from "react-redux";
-
 export function propsFromState(state) {
   const {
     ui,
@@ -29,6 +25,7 @@ export function propsFromState(state) {
     files,
     images,
     documents,
+    media,
     folders,
     rootFolderId,
     flickr,
@@ -56,6 +53,7 @@ export function propsFromState(state) {
     files,
     images,
     documents,
+    media,
     folders,
     rootFolderId,
     flickr,
@@ -65,5 +63,3 @@ export function propsFromState(state) {
     ...ui
   };
 }
-
-export default connect(propsFromState, sidebarHandlers)(Sidebar);

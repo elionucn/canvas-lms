@@ -116,14 +116,8 @@ class RceApiSource {
     }
   }
 
-  initializeImages() {
-    return {
-      records: [],
-      bookmark: undefined,
-      hasMore: false,
-      isLoading: false,
-      requested: false
-    }
+  initializeImages(props) {
+    return this.initializeDocuments(props)
   }
 
   initializeDocuments(props) {
@@ -135,6 +129,10 @@ class RceApiSource {
         hasMore: true
       }
     }
+  }
+
+  initializeMedia(props) {
+    return this.initializeDocuments(props)
   }
 
   initializeFlickr() {
@@ -153,6 +151,12 @@ class RceApiSource {
   fetchDocs(props) {
     const documents = props.documents[props.contextType]
     const uri = documents.bookmark || this.uriFor('documents', props)
+    return this.apiFetch(uri, headerFor(this.jwt))
+  }
+
+  fetchMedia(props) {
+    const media = props.media[props.contextType]
+    const uri = media.bookmark || this.uriFor('media', props)
     return this.apiFetch(uri, headerFor(this.jwt))
   }
 
@@ -207,13 +211,9 @@ class RceApiSource {
   }
 
   fetchImages(props) {
-    if (props.bookmark) {
-      return this.apiFetch(props.bookmark, headerFor(this.jwt))
-    } else {
-      const headers = headerFor(this.jwt)
-      const uri = this.uriFor('images', props)
-      return this.apiFetch(uri, headers)
-    }
+    const uri = props.bookmark || this.uriFor('images', props)
+    const headers = headerFor(this.jwt)
+    return this.apiFetch(uri, headers)
   }
 
   preflightUpload(fileProps, apiProps) {
@@ -377,11 +377,10 @@ class RceApiSource {
       .catch(throwConnectionError)
       .catch((e) => {
         this.alertFunc({
-         text: formatMessage('Something went wrong uploading, check your connection and try again.'),
-         variant: 'error'
-       })
-       // eslint-disable-next-line no-console
-       console.error(e)
+          text: formatMessage('Something went wrong uploading, check your connection and try again.'),
+          variant: 'error'
+        })
+        console.error(e) // eslint-disable-line no-console
       })
     }
 
@@ -424,7 +423,7 @@ class RceApiSource {
         host = `${windowHandle.location.protocol}${host}`
       }
     }
-    const sharedEndpoints = ['media', 'documents', 'all']
+    const sharedEndpoints = ['images', 'media', 'documents', 'all'] // 'all' will eventually be something different
     const endpt = sharedEndpoints.includes(endpoint) ? 'documents' : endpoint
     return `${host}/api/${endpt}`
   }
@@ -438,10 +437,9 @@ class RceApiSource {
     const {host, contextType, contextId} = props
     let extra = ''
     switch(endpoint) {
-      // images will eventually work, but it has to be looking for files, not images in the response
-      // case 'images':
-      //   extra = '&content_types=image'
-      //   break;
+      case 'images':
+        extra = '&content_types=image'
+        break;
       case 'media':
         extra = '&content_types=video,audio'
         break;

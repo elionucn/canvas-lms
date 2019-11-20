@@ -1234,6 +1234,7 @@ fa:
         domain: "دامنه:"
         edit_institution_email: "کاربران می توانند نشانی پست الکترونیکی تخصیص داده شده توسط دانشگاه حذف کنند"
         enable_alerts: "هشدارها (بتا)"
+        enable_course_catalog: "فهرست قابل جستجوی درس های موجود در این حساب ریشه را در حالی که پرچم «شامل سازی این درس در فهرست عمومی درس» فعال شده است»، نمایش دهید."
         enable_eportfolios: "مجموعه های اسناد الکترونیکی"
         enable_profiles: "فعال سازی رخ نماها"
         enable_turnitin: Turnitin
@@ -1716,6 +1717,7 @@ fa:
   add_new_term_d2217c0d: "افزودن نیمسال جدید"
   add_people_7ee4b2ec: "افزودن افراد"
   add_people_to_coursename_5ea234e1: "افزودن افراد به %{courseName}"
+  add_quiz_cebfa28b: "افزودن آزمون"
   add_quiz_ip_filter_c7b37dc5: "افزودن فیلتر آی پی آزمون"
   add_rating_89d7fbde: "افزودن رتبه بندی"
   add_recipient_ff135ed7: "افزودن گیرنده"
@@ -10370,6 +10372,7 @@ fa:
   manage_update_for_toolname_f8e3b2fb: "مدیریت بهنگام سازی برای %{toolName}"
   manage_usage_rights_c5a8c216: "مدیریت حقوق استفاده"
   manage_your_course_details_664c335f: "مدیریت جزئیات درس خود"
+  manual_8c2665de: راهنما
   manual_entry_e4a4f99a: "ورودی دستی"
   manually_mark_posts_as_read_afa5d035: "علامتگذاری دستی ارسال ها به عنوان خوانده شده"
   mark_as_done_6fa48d2f: "علامتگذاری به عنوان انجام شده"
@@ -12195,6 +12198,11 @@ fa:
         submitted_date: "ارسال شد: %{date}"
       twitter: 
         body: "هشدار کانوس - آزمون ارسال شد: %{quiz}، %{user_name}"
+    submission_posted: 
+      email: 
+        html: 
+          body: "استاد شما تغییرهای نمره و نظرهای جدید برای %{title} را اعلام کرده است. این تغییرها اکنون قابل مشاهده هستند."
+          link: "می توانید آن را در اینجا مشاهده کنید"
     summaries: 
       email: 
         daily_body: "برای دریافت یک گزارش روزانه بعضی اطلاعیه ها از طریق حساب کانواس خود ثبت نام شده اید. در زیر گزارش مربوط به تاریخ %{date} آمده است:"
@@ -12355,6 +12363,7 @@ fa:
   moderated_grading_setting_cannot_be_enabled_for_un_e40e6cd4: "تنظیم نمره گذاری نظارت شده نمی تواند برای تکلیف های نمره گذاری نشده فعال شود"
   moderator_49b9f2e1: ناظر
   moderator_sortorder_18063692: "تعدیل کننده %{sortOrder}"
+  modified_by_c1584b3c: "تغییر یافته بر اساس"
   module_90d9fd32: ماژول
   module_completed_50c50762: "ماژول کامل شد"
   module_filter_63b17d11: "فیلتر ماژول"
@@ -12773,6 +12782,7 @@ fa:
   no_placements_enabled_f705f28: "هیچ جای گذاری فعال نشده است"
   no_points_possible_368669d: "امتیازهای ممکن موجود نیست"
   no_points_possible_72db3a55: "امتیاز ممکن موجود نیست"
+  no_results_3cda4e72: "نتیجه موجود نیست"
   no_results_f36777ee: "نتیجه موجود نیست"
   no_results_found_58717065: "نتیجه ای یافت نشد"
   no_results_found_e4b686bd: "نتیجه ای یافت نشد."
@@ -18363,6 +18373,7 @@ fa:
   syncing_grades_to_sis_d63112e0: "در حال همگام سازی نمره ها با سامانه اطلاعات دانشجو..."
   syncing_message_416fdc58: "در حال همگام سازی: %{message}"
   system_default_language_28a1052d: "پیش فرض سیستم (%{language})"
+  ta_8d966626: "دستیار آموزشی"
   tab_1_3d6b3fb: "زبانه 1"
   tab_1_content_8944c219: "محتوای زبانه 1"
   tab_2_9adfe241: "زبانه 2"
@@ -20130,6 +20141,11 @@ fa:
   your_email_address_f881e583: "نشانی پست الکترونیکی شما"
   your_email_b5364bee: "پست الکترونیکی شما"
   your_file_is_being_uploaded_to_gradebook_and_you_c_70e80fc7: "فایل شما در حال بارگذاری در دفتر نمره است، و می توانید در هر زمان از این صفحه خارج شوید. اگر یک فایل CSV بزرگ دارید، بهنگام سازی تغییرات شما ممکن است چند دقیقه طول بکشد. برای جلوگیری از رونویسی هر گونه داده، لطفا قبل از ایجاد تغییرات دیگر تأیید کنید که بارگذاری انجام شده است و دفتر نمره درست می باشد."
+  your_instructor_has_released_grade_changes_and_new_ffe458c8: |-
+      استاد شما تغییر نمره ها و نظرهای جدید برای %{title} را منتشر کرده است. این تغییرها اکنون قابل مشاهده هستند.
+      
+      در اینجا می توانید آن را مشاهده کنید.
+      %{url}
   your_message_has_been_sent_thank_you_e0284316: "پیام شما ارسال شده است. از شما سپاسگزاریم!"
   your_message_was_sent_977f6583: "پیام شما ارسال شد!"
   your_name_7665e1d8: "نام شما"

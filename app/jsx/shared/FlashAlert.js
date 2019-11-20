@@ -45,12 +45,11 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import ReactDOM from 'react-dom'
 import I18n from 'i18n!ajaxflashalert'
-import Alert from '@instructure/ui-alerts/lib/components/Alert'
-import Button from '@instructure/ui-buttons/lib/components/Button'
-import Text from '@instructure/ui-elements/lib/components/Text'
-import PresentationContent from '@instructure/ui-a11y/lib/components/PresentationContent'
-import ScreenReaderContent from '@instructure/ui-a11y/lib/components/ScreenReaderContent'
-import Transition from '@instructure/ui-motion/lib/components/Transition'
+import {Alert} from '@instructure/ui-alerts'
+import {Button} from '@instructure/ui-buttons'
+import {Text} from '@instructure/ui-elements'
+import {PresentationContent, ScreenReaderContent} from '@instructure/ui-a11y'
+import {Transition} from '@instructure/ui-motion'
 
 const messageHolderId = 'flashalert_message_holder' // specs fail if I reuse jquery's elements
 const screenreaderMessageHolderId = 'flash_screenreader_holder'
@@ -170,7 +169,7 @@ export default class FlashAlert extends React.Component {
       <Transition transitionOnMount in={this.state.isOpen} type='fade'>
         <Alert
           variant={this.props.variant}
-          closeButtonLabel={I18n.t('Close')}
+          renderCloseButtonLabel={I18n.t('Close')}
           onDismiss={this.closeAlert}
           margin="small auto"
           timeout={this.props.timeout}
